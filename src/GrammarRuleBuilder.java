@@ -1,4 +1,5 @@
 import java.util.EmptyStackException;
+import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
 
@@ -6,6 +7,7 @@ import java.util.Vector;
 public class GrammarRuleBuilder {
 
 	private String name;
+	private static int nameCounter = 1;
 	
 	private GrammarDefinition grammardef;
 	
@@ -13,15 +15,15 @@ public class GrammarRuleBuilder {
 	
 	private Stack<StateGraph<GrammarState>> operandStack = new Stack<StateGraph<GrammarState>>();
 	private Stack<Character> operatorStack = new Stack<Character>();
+	private Stack<String> nameStack = new Stack<String>();
 	
-	private Vector<StateGraph<GrammarState>> graphs = new Vector<StateGraph<GrammarState>>();
-	
-	private Vector<GrammarRule> rules = new Vector<GrammarRule>();
+	private Hashtable<String, Vector<GrammarRule>> rules = new Hashtable<String, Vector<GrammarRule>>();
 	
 	static final char opConcat = 2;
 	
 	public String getName() { return name; }
-	public Vector<GrammarRule> getRules() { return rules; }
+	public Hashtable<String, Vector<GrammarRule>> getRules() { return rules; }
+	public Vector<GrammarRule> getRules(String rulename) { return rules.get(rulename); }
 	
 	public GrammarRuleBuilder (GrammarTokenizer tokenizer, Vector<String> tokenNames, GrammarDefinition grammardef) throws Exception {
 		this.grammardef = grammardef;
@@ -47,35 +49,13 @@ public class GrammarRuleBuilder {
 		// Parse the definition
 		parseDefinition(tokenizer, tokenNames);
 		
-		for (StateGraph<GrammarState> g : graphs) {
-			rules.add(new GrammarRule(name, g, multi_child, grammardef));
-		}
-		
-		/*StateGraph<GrammarState> graph = parseDefinition(tokenizer, tokenNames);
-		
-		Stack<GrammarState> process = new Stack<GrammarState>();
-		
-		process.push(graph.firstElement());
-		
-		while (!process.isEmpty()) {
-			
-			GrammarState processState = process.pop();
-			
-			if (processState.getType() == GrammarState.EMPTY) {
-				process.addAll(processState.getNext());
-			} else {
-				StateGraph<GrammarState> copy = graph.copy();
-				
-			}
-			
-		}
-		*/
-		
 	}
 	
 	private void parseDefinition(GrammarTokenizer tokenizer, Vector<String> tokenNames) throws Exception {
 		
 		Token tok;
+		
+		nameStack.push(name);
 		
 		while ( !(tok=getToken(tokenizer)).is("eol") ) {
 			
@@ -83,6 +63,7 @@ public class GrammarRuleBuilder {
 				pushOperator(tok.value.charAt(0));
 			}
 			else if (tok.is("lparen")) {
+				pushNewName();
 				pushOperator(tok.value.charAt(0), false);
 			}
 			else if (tok.is("rparen")) {
@@ -97,9 +78,15 @@ public class GrammarRuleBuilder {
 				
 					evaluate();
 				}
+				
+				String subrulename = nameStack.pop();
+				
+				addRule(subrulename, operandStack.pop());
+				
+				pushOperand(new GrammarState(subrulename, GrammarState.RULE));
 			}
 			else if (tok.is("id")) {
-				int type = tokenNames.contains(tok.value) ? GrammarState.TOKEN_TYPE : GrammarState.RULE_TYPE;
+				int type = tokenNames.contains(tok.value) ? GrammarState.TOKEN : GrammarState.RULE;
 				pushOperand(new GrammarState(tok.value, type));
 			}
 			else if (tok.is("multi_child")) {
@@ -119,13 +106,20 @@ public class GrammarRuleBuilder {
 			char c = operatorStack.peek();
 			
 			if (c == '(') throw new Exception("Could not find end subpattern ')'");
-			if (c == '[') throw new Exception("Could not find end character class ']");
 			
 			evaluate();
 		}
 		
-		includeGraph(operandStack.pop());
+		addRule(nameStack.pop(), operandStack.pop());
 		
+	}
+	
+	private void pushNewName() {
+		nameStack.push(getNewName());
+	}
+	
+	private String getNewName() {
+		return name + "{" + nameCounter++ + "}";
 	}
 	
 	private void pushOperand(GrammarState state) {
@@ -152,18 +146,12 @@ public class GrammarRuleBuilder {
 		operatorStack.push(c);
 	}
 	
-	// Make sure we have an empty start and empty end
-	private void includeGraph(StateGraph<GrammarState> graph) {
-		GrammarState start = new GrammarState();
-		GrammarState end = new GrammarState();
+	private void addRule(String rulename, StateGraph<GrammarState> rulegraph) {
+		GrammarRule rule = new GrammarRule(rulename, rulegraph, false, grammardef);
 		
-		start.addNext(graph.start());
-		graph.addFirst(start);
+		if (!rules.containsKey(rulename)) rules.put(rulename, new Vector<GrammarRule>());
 		
-		graph.end().addNext(end);
-		graph.addLast(end);
-		
-		graphs.add(graph);
+		rules.get(rulename).add(rule);
 	}
 	
 	private void evaluate() throws Exception{
@@ -175,12 +163,7 @@ public class GrammarRuleBuilder {
 					evalConcat();
 					break;
 				case '|':
-					if (operatorStack.size() == 0) {
-						// top level alternative
-						includeGraph(operandStack.pop());
-					} else {
-						evalAlternative();
-					}
+					evalAlternative();
 					break;
 				case '*':
 					evalZeroPlus();
@@ -197,13 +180,13 @@ public class GrammarRuleBuilder {
 		}
 	}
 	
-	private void evalConcat() {
+	private void evalConcat() throws Exception {
 		StateGraph<GrammarState> a, b;
 		
 		b = operandStack.pop();
 		a = operandStack.pop();
 		
-		a.lastElement().addNext(b.firstElement());
+		a.lastElement().next(b.firstElement());
 		
 		a.addAll(b);
 		
@@ -211,61 +194,39 @@ public class GrammarRuleBuilder {
 	}
 	
 	private void evalAlternative() {
-		StateGraph<GrammarState> a, b;
-		
-		b = operandStack.pop();
-		a = operandStack.pop();
-		
-		GrammarState start = new GrammarState();
-		GrammarState end = new GrammarState();
-		
-		start.addNext(a.firstElement());
-		start.addNext(b.firstElement());
-
-		a.lastElement().addNext(end);
-		b.lastElement().addNext(end);
-				
-		b.addLast(end);
-		
-		a.addFirst(start);
-		a.addAll(b);
-		
-		operandStack.push(a);
+		addRule(nameStack.peek(), operandStack.pop());
 	}
 	
-	private void evalZeroPlus() {
-		StateGraph<GrammarState> g = operandStack.pop();
+	private void evalZeroPlus() throws Exception {
 		
-		GrammarState start = new GrammarState();
-		GrammarState end = new GrammarState();
+		String subrulename = getNewName();
 		
-		start.addNext(end);
-		start.addNext(g.firstElement());
+		StateGraph<GrammarState> subrulegraph = operandStack.pop();
+	
+		GrammarState repeat = new GrammarState(subrulename, GrammarState.RULE);
 		
-		g.lastElement().addNext(end);
-		g.lastElement().addNext(g.firstElement());
+		subrulegraph.lastElement().next( repeat );
+		subrulegraph.addLast(repeat);
 		
-		g.addFirst(start);
-		g.addLast(end);
 		
-		operandStack.push(g);
+		addRule(subrulename, subrulegraph);
+		addRule(subrulename, null);
+		
+		pushOperand(new GrammarState(subrulename, GrammarState.RULE));
+		
 	}
 	
-	private void evalOptional() {
-		StateGraph<GrammarState> g = operandStack.pop();
+	private void evalOptional() throws Exception {
 		
-		GrammarState start = new GrammarState();
-		GrammarState end = new GrammarState();
+		String subrulename = getNewName();
 		
-		start.addNext(end);
-		start.addNext(g.firstElement());
+		StateGraph<GrammarState> subrulegraph = operandStack.pop();
 		
-		g.lastElement().addNext(end);
+		addRule(subrulename, subrulegraph);
+		addRule(subrulename, null);
 		
-		g.addFirst(start);
-		g.addLast(end);
+		pushOperand(new GrammarState(subrulename, GrammarState.RULE));
 		
-		operandStack.push(g);
 	}
 	
 	private void detectImplicitConcat(Token tokLeft, Token tokRight) throws Exception {

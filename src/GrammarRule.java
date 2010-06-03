@@ -28,33 +28,37 @@ public class GrammarRule {
 		this.grammardef = grammardef;
 	}
 	
-	public HashSet<String> getFollow(String rulename) throws Exception {
+	public HashSet<String> getFollowOf(String rulename) throws Exception {
 		HashSet<String> follow = new HashSet<String>();
 		
+		if (graph == null) {
+			return follow;
+		}
+		
 		for (GrammarState state : graph) {
-			if (state.getType() == GrammarState.RULE_TYPE && state.getName().equals(rulename)) {
+			if (state.getType() == GrammarState.RULE && state.getName().equals(rulename)) {
 				
 				Stack<GrammarState> process = new Stack<GrammarState>();
 				
 				GrammarState processState;
 				
-				process.addAll(state.getNext());
+				process.push(state.getNext());
 				
 				while (!process.isEmpty()) {
 				
 					processState = process.pop();
 					
 					if (processState.getType() == GrammarState.EMPTY) {
-						if (processState.hasNext()) {						
-							process.addAll(processState.getNext());
+						if (processState.getNext() != null) {						
+							process.push(processState.getNext());
 						} else {
 							follow.addAll( grammardef.follow(this.getName()) );
 						}
 					}
-					else if (processState.getType() == GrammarState.TOKEN_TYPE) {
+					else if (processState.getType() == GrammarState.TOKEN) {
 						follow.add(processState.getName());
 					}
-					else if (processState.getType() == GrammarState.RULE_TYPE) {
+					else if (processState.getType() == GrammarState.RULE) {
 						HashSet<String> nextFirst = grammardef.first(processState.getName());
 						
 						if (nextFirst.contains(null)) {
@@ -78,6 +82,11 @@ public class GrammarRule {
 		
 		Vector<String> first = new Vector<String>();
 		
+		if (graph == null) {
+			//first.add(null);
+			return first;
+		}
+		
 		Stack<GrammarState> process = new Stack<GrammarState>();
 		
 		process.push(graph.firstElement());
@@ -87,18 +96,18 @@ public class GrammarRule {
 			GrammarState state = process.pop();
 			
 			if (state.getType() == GrammarState.EMPTY) {
-				if (state.hasNext()) {
-					process.addAll(state.getNext());
+				if (state.getNext() != null) {
+					process.push(state.getNext());
 				} else {
 					first.add(null);
 				}
 			}
-			else if (state.getType() == GrammarState.RULE_TYPE) {
+			else if (state.getType() == GrammarState.RULE) {
 				if (!grammardef.hasRule(state.getName())) throw new Exception("Undefined rule: " + state.getName());
 				
 				first.addAll( grammardef.first(state.getName()) );
 			} 
-			else if (state.getType() == GrammarState.TOKEN_TYPE) {
+			else if (state.getType() == GrammarState.TOKEN) {
 				first.add(state.getName());
 			}
 			
@@ -107,6 +116,8 @@ public class GrammarRule {
 		return first;
 		
 	}
+	
+	public String toString() { return " "+graph; } 
 	
 	
 }

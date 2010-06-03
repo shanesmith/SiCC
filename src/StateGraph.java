@@ -26,7 +26,7 @@ public class StateGraph<T> extends Vector<T> {
 		String str = "";
 		
 		for (T st : this) {
-			str += st.toString() + "\n";
+			str += st.toString() + " => ";
 		}
 		
 		return str;

@@ -1,15 +1,13 @@
 
-import java.util.Vector;
-
 public class GrammarState {
 
-	public static final int UNKNOWN_TYPE = -1, EMPTY = 0, TOKEN_TYPE = 1, RULE_TYPE = 2;
+	public static final int UNKNOWN = -1, EMPTY = 0, TOKEN = 1, RULE = 2;
 	
 	private int type;
 	
 	private String name;
 	
-	private Vector<GrammarState> next = new Vector<GrammarState>();
+	private GrammarState next;
 	
 	public GrammarState() {
 		this.type = EMPTY;
@@ -17,7 +15,7 @@ public class GrammarState {
 	
 	public GrammarState(String name) {
 		this.name = name;
-		this.type = UNKNOWN_TYPE;
+		this.type = UNKNOWN;
 	}
 	
 	public GrammarState(String name, int type) throws Exception {
@@ -31,11 +29,26 @@ public class GrammarState {
 		
 	}
 	
-	public void addNext(GrammarState state) { next.add(state); }
-	public Vector<GrammarState> getNext() { return next; }
-	public boolean hasNext() { return !next.isEmpty(); }
+	public void next(GrammarState state) throws Exception { 
+		if (next != null) throw new Exception("State \"" + name + "\" already has a next!");
+		next = state; 
+	}
+	public GrammarState getNext() { return next; }
 	
 	public int getType() { return type; }
+	
+	public String getTypeString() {
+		switch (type) {
+			case EMPTY: return "-";
+			case TOKEN: return "T";
+			case RULE: return "R";
+			default:	
+			case UNKNOWN: return "?";
+		}
+	}
+	
 	public String getName() { return name; }
+	
+	public String toString() { return name + "[" + getTypeString() + "]"; }
 	
 }

@@ -1,6 +1,3 @@
-TODO
-====
-- ability to use tokenizer without parser
 
 Questions
 =========

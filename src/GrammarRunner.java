@@ -1,6 +1,4 @@
 
-import java.io.*;
-
 public class GrammarRunner {
 
 	private TokenizerRunner tokenizer;
@@ -12,11 +10,11 @@ public class GrammarRunner {
 		this.tokenizer = tokenizer;
 	}
 	
-	public void run() {
+	public void run() throws Exception {
 		
 		Token tok;
 		
-		GrammarRule curRule = 
+		//GrammarRule curRule = 
 		
 		while ( true ) {
 			

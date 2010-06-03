@@ -5,9 +5,6 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import javax.naming.ldap.StartTlsRequest;
-
-
 public class GrammarDefinition {
 
 	private String startRuleName;
@@ -47,6 +44,8 @@ public class GrammarDefinition {
 	
 	public Vector<GrammarRule> getStartRules() { return rules.get(startRuleName); }
 	
+	public HashMap<String, HashMap<String, GrammarRule>> getTable() { return table; }
+	
 	private void addToTable(String rulename, String terminal, GrammarRule rule) {
 		if (!table.containsKey(rulename)) table.put(rulename, new HashMap<String, GrammarRule>());
 		
@@ -69,7 +68,11 @@ public class GrammarDefinition {
 			
 			GrammarRuleBuilder rulebuilder = new GrammarRuleBuilder(tokenizer, tokenNames, this);
 			
-			rules.put(rulebuilder.getName(), rulebuilder.getRules());
+			for (String rulename : rulebuilder.getRules().keySet()) {
+				if (!rules.containsKey(rulename)) rules.put(rulename, new Vector<GrammarRule>());
+				
+				rules.get(rulename).addAll(rulebuilder.getRules(rulename));
+			}
 			
 			if (startRuleName == null) startRuleName = rulebuilder.getName();
 			
@@ -97,7 +100,7 @@ public class GrammarDefinition {
 		
 		for (Vector<GrammarRule> v : rules.values()) {
 			for (GrammarRule r : v) {
-				follow.addAll(r.getFollow(rulename));
+				follow.addAll(r.getFollowOf(rulename));
 			}
 		}
 		
