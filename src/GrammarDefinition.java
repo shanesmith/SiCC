@@ -13,6 +13,7 @@ public class GrammarDefinition {
 	
 	private HashMap<String, HashMap<String, GrammarRule>> table = new HashMap<String, HashMap<String, GrammarRule>>();
 	
+	
 	public GrammarDefinition(Reader definitions, Vector<String> tokenNames) throws Exception {
 		parse(new GrammarTokenizer(definitions), tokenNames);
 		
@@ -20,7 +21,7 @@ public class GrammarDefinition {
 			
 			for (GrammarRule rule : rulesvector) {
 				
-				for (String terminal : first(rule.getName())) {
+				for (String terminal : rule.first()) {
 					
 					if (terminal == null) {
 						
@@ -43,11 +44,23 @@ public class GrammarDefinition {
 	}
 	
 	public Vector<GrammarRule> getStartRules() { return rules.get(startRuleName); }
+	public String getStartRuleName() { return startRuleName; }
 	
 	public HashMap<String, HashMap<String, GrammarRule>> getTable() { return table; }
 	
-	private void addToTable(String rulename, String terminal, GrammarRule rule) {
+	public GrammarRule getProduction(String rulename, String tokenname) throws Exception { 
+		
+		if (!table.containsKey(rulename)) throw new Exception("Invalid rule name: " + rulename);
+		
+		if (!table.get(rulename).containsKey(tokenname)) throw new Exception("Invalid token \"" + tokenname + "\" for rule \"" + rulename + "\"");
+		
+		return table.get(rulename).get(tokenname); 
+	}
+	
+	private void addToTable(String rulename, String terminal, GrammarRule rule) throws Exception {
 		if (!table.containsKey(rulename)) table.put(rulename, new HashMap<String, GrammarRule>());
+		
+		if (table.get(rulename).containsKey(terminal)) throw new Exception("Terminal \"" + terminal + "\" already exists for rule \"" + rulename + "\"");
 		
 		table.get(rulename).put(terminal, rule);
 	}

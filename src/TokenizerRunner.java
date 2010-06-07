@@ -55,7 +55,7 @@ public class TokenizerRunner {
 				
 				TokenDFA tokdfa = curState.getOwners().firstElement();
 				
-				if (tokdfa.name == SKIP) {
+				if (tokdfa.name.equals(SKIP)) {
 					continue tokenLoop;
 				} else {
 					return new Token(tokdfa.name, value, line);

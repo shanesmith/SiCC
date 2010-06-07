@@ -81,7 +81,7 @@ public class GrammarRuleBuilder {
 				
 				String subrulename = nameStack.pop();
 				
-				addRule(subrulename, operandStack.pop());
+				addSubrule(subrulename, operandStack.pop());
 				
 				pushOperand(new GrammarState(subrulename, GrammarState.RULE));
 			}
@@ -146,12 +146,22 @@ public class GrammarRuleBuilder {
 		operatorStack.push(c);
 	}
 	
+	private void addSubrule(String rulename, StateGraph<GrammarState> rulegraph) {
+		GrammarRule rule = new GrammarRule(rulename, rulegraph, false, grammardef, true);
+		
+		addRule(rule);
+	}
+	
 	private void addRule(String rulename, StateGraph<GrammarState> rulegraph) {
 		GrammarRule rule = new GrammarRule(rulename, rulegraph, false, grammardef);
 		
-		if (!rules.containsKey(rulename)) rules.put(rulename, new Vector<GrammarRule>());
+		addRule(rule);
+	}
+	
+	private void addRule(GrammarRule rule) {
+		if (!rules.containsKey(rule.getName())) rules.put(rule.getName(), new Vector<GrammarRule>());
 		
-		rules.get(rulename).add(rule);
+		rules.get(rule.getName()).add(rule);
 	}
 	
 	private void evaluate() throws Exception{
@@ -209,8 +219,8 @@ public class GrammarRuleBuilder {
 		subrulegraph.addLast(repeat);
 		
 		
-		addRule(subrulename, subrulegraph);
-		addRule(subrulename, null);
+		addSubrule(subrulename, subrulegraph);
+		addSubrule(subrulename, null);
 		
 		pushOperand(new GrammarState(subrulename, GrammarState.RULE));
 		
@@ -222,8 +232,8 @@ public class GrammarRuleBuilder {
 		
 		StateGraph<GrammarState> subrulegraph = operandStack.pop();
 		
-		addRule(subrulename, subrulegraph);
-		addRule(subrulename, null);
+		addSubrule(subrulename, subrulegraph);
+		addSubrule(subrulename, null);
 		
 		pushOperand(new GrammarState(subrulename, GrammarState.RULE));
 		

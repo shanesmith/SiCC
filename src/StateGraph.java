@@ -12,6 +12,7 @@ public class StateGraph<T> extends Vector<T> {
 		super(copy); 
 	}
 	
+	// Shallow copy
 	public StateGraph<T> copy() {
 		return new StateGraph<T>(this);
 	}

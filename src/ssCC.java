@@ -39,7 +39,9 @@ public class ssCC {
 		try {
 			ssCC sscc = new ssCC(args);
 			
-			sscc.createClasses();
+			sscc.runGrammar(new InputStreamReader(System.in));
+			
+			//sscc.createClasses();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -52,11 +54,6 @@ public class ssCC {
 		this.args = args;
 		
 		parseArgs();
-		
-		if (grammardef != null) {
-			println(grammardef);
-			end();
-		}
 	}
 	
 	private void parseArgs() throws Exception {
@@ -87,6 +84,25 @@ public class ssCC {
 			
 			grammardef = new GrammarDefinition(new FileReader(grammarFile), tokendef.getAllTokenNames());
 		}
+		
+	}
+	
+	public void runTokenizer(Reader reader) throws Exception {
+		Token tok;
+		
+		TokenizerRunner runner = new TokenizerRunner(tokendef, reader);
+		
+		while ( (tok=runner.nextToken()) != null ) {
+			println(tok);
+		}
+		
+	}
+	
+	public void runGrammar(Reader reader) throws Exception {
+		
+		GrammarRunner runner = new GrammarRunner(grammardef, new TokenizerRunner(tokendef, reader));
+		
+		runner.run();
 		
 	}
 	

@@ -7,26 +7,33 @@ public class GrammarRule {
 	
 	private boolean multi_child = false;
 	
+	private boolean subrule = false;
+	
 	private GrammarDefinition grammardef;
 	
 	private StateGraph<GrammarState> graph;
 	
 	public String getName() { return name; }
 	public boolean isMultiChild() { return multi_child; }
-	
-	/*
-	public GrammarRule(GrammarTokenizer tokenizer, Vector<String> tokenNames, GrammarDefinition grammardef) throws Exception {
-		this.grammardef = grammardef;
-		parse(tokenizer, tokenNames);
-	}
-	*/
+	public boolean isSubrule() { return subrule; }
 
 	public GrammarRule(String name, StateGraph<GrammarState> graph, boolean multi_child, GrammarDefinition grammardef) {
+		this(name, graph, multi_child, grammardef, false);
+	}
+	
+	public GrammarRule(String name, StateGraph<GrammarState> graph, boolean multi_child, GrammarDefinition grammardef, boolean subrule) {
 		this.name = name;
 		this.graph = graph;
 		this.multi_child = multi_child;
 		this.grammardef = grammardef;
+		this.subrule = subrule;
 	}
+	
+	public void pushToStack(Stack<GrammarState> stateStack) {
+		graph.start().pushToStack(stateStack);
+	}
+	
+	public boolean hasGraph() { return graph != null; }
 	
 	public HashSet<String> getFollowOf(String rulename) throws Exception {
 		HashSet<String> follow = new HashSet<String>();
@@ -48,12 +55,13 @@ public class GrammarRule {
 				
 					processState = process.pop();
 					
-					if (processState.getType() == GrammarState.EMPTY) {
-						if (processState.getNext() != null) {						
-							process.push(processState.getNext());
-						} else {
+					if (processState == null) { 
+						if (!this.getName().equals(rulename)) {
 							follow.addAll( grammardef.follow(this.getName()) );
 						}
+					}					
+					else if (processState.getType() == GrammarState.EMPTY) {						
+						process.push(processState.getNext());
 					}
 					else if (processState.getType() == GrammarState.TOKEN) {
 						follow.add(processState.getName());
@@ -83,7 +91,7 @@ public class GrammarRule {
 		Vector<String> first = new Vector<String>();
 		
 		if (graph == null) {
-			//first.add(null);
+			first.add(null);
 			return first;
 		}
 		

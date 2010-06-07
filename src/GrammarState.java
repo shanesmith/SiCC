@@ -1,4 +1,7 @@
 
+import java.util.Stack;
+
+
 public class GrammarState {
 
 	public static final int UNKNOWN = -1, EMPTY = 0, TOKEN = 1, RULE = 2;
@@ -45,6 +48,14 @@ public class GrammarState {
 			default:	
 			case UNKNOWN: return "?";
 		}
+	}
+	
+	public void pushToStack(Stack<GrammarState> stateStack) {
+		
+		if (next != null) next.pushToStack(stateStack);
+		
+		stateStack.push(this);
+		
 	}
 	
 	public String getName() { return name; }
