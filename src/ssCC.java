@@ -39,9 +39,9 @@ public class ssCC {
 		try {
 			ssCC sscc = new ssCC(args);
 			
-			sscc.runGrammar(new InputStreamReader(System.in));
+			//sscc.runGrammar(new InputStreamReader(System.in));
 			
-			//sscc.createClasses();
+			sscc.createClasses();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -111,6 +111,10 @@ public class ssCC {
 	public void createClasses() throws Exception {
 		createTokenClass();
 		createTokenizerClass();
+		
+		createVisitorInterface();
+		
+		createASTNodeClasses();
 	}
 	
 	private void createTokenizerClass() throws Exception {
@@ -124,17 +128,101 @@ public class ssCC {
 	}
 	
 	private void createTokenClass() throws Exception {
-		PrintWriter out = getWriter(prefix + "Token.java");
+		String classname = prefix + "Token";
 		
-		out.println("class " + prefix + "Token {");
+		PrintWriter out = getWriter(classname + ".java");
+		
+		out.println("class " + classname + " {");
 		out.println("  public int line;");
 		out.println("  public String name, value;");
-		out.println("  public " + prefix + "Token (String n, String v, int l) { name=n; value=v; line=l; }");
+		out.println("  public " + classname + " (String n, String v, int l) { name=n; value=v; line=l; }");
 		out.println("  public String toString() { return \"(\" + line + \") \" + name + \" => \" + value; }");
 		out.println("  public boolean is (String str) { return str.equals(name); }");
-		out.println("} // end " + prefix + "Token");
+		out.println("} // end " + classname);
 		
 		out.close();
+	}
+	
+	private void createVisitorInterface() throws Exception {
+		
+		String interfacename = prefix + "Visitor";
+		
+		PrintWriter out = getWriter(interfacename + ".java");
+		
+		out.println("public interface " + interfacename + " {");
+		
+		out.println("  public Object visit(" + prefix + "ASTNode node, Object data);");
+		
+		for (String rulename : grammardef.getRuleNames()) {
+			if (grammardef.getRules(rulename).get(0).isSubrule()) continue;
+		
+			String classname = prefix + "AST" + rulename + "Node";
+			
+			out.println("  public Object visit(" + classname + " node, Object data);");
+			
+		}
+		
+		out.println("} // end " + interfacename);
+		
+		out.close();
+		
+	}
+	
+	private void createASTNodeClasses() throws Exception {
+		createASTNodeSuperClass();
+		createASTNodeSubClasses();
+	}
+	
+	private void createASTNodeSuperClass() throws Exception {
+		String classname = prefix + "ASTNode";
+		String visitorname = prefix + "Visitor";
+		
+		PrintWriter out = getWriter(classname + ".java");
+		
+		out.println("import java.util.Vector;");
+		out.println();
+		out.println("class " + classname + " {");
+		out.println("  private ASTNode parent;");
+		out.println("  private Vector<ASTNode> children = new Vector<ASTNode>();");
+		out.println("  private String name, value;");
+		out.println("  public " + classname + " (String n, String v, ASTNode p) { name=n; value=v; parent=p; }");
+		out.println("  public void addChild(ASTNode node) { children.add(node); }");
+		out.println("  public void removeChild(ASTNode node) { children.remove(node); }");
+		out.println("  public Vector<ASTNode> getChildren() { return children; }");
+		out.println("  public ASTNode getChild(int i) { return children.get(i); }");
+		out.println("  public int numChildren() { return children.size(); }");
+		out.println("  public String getName() { return name; }");
+		out.println("  public String getValue() { return value; }");
+		out.println("  public ASTNode getParent() { return parent; }");
+		out.println("  public Object accept(" + visitorname + " visitor, Object data) { return visitor.visit(this, data); }");
+		out.println("  public Object childrenAccept(" + visitorname + " visitor, Object data) { for(ASTNode node : children) node.accept(visitor, data); return data; }");
+		out.println("  public String toString() { if (value == null || value.isEmpty()) { return name; } else { return name + \" => \" + value; } }");
+		out.println("} // end " + classname);
+		
+		out.close();
+	}
+	
+	private void createASTNodeSubClasses() throws Exception {
+		
+		String extendname = prefix + "ASTNode";
+		
+		PrintWriter out;
+		
+		for (String rulename : grammardef.getRuleNames()) {
+			if (grammardef.getRules(rulename).get(0).isSubrule()) continue;
+			
+			String classname = prefix + "AST" + rulename + "Node";
+			
+			out = getWriter(classname + ".java");
+			
+			out.println("class " + classname + " extends " + extendname + " {");
+			out.println("  public " + classname + " (String n, String v, ASTNode p) { super(n,v,p); }");
+			out.println("} // end " + classname);
+			
+			out.close();
+			
+		}
+		
 	}
 	
 	private static PrintWriter getWriter(String filename) throws Exception {

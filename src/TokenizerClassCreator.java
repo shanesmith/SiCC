@@ -208,7 +208,6 @@ public class TokenizerClassCreator {
 		
 		out.println("} // end " + prefix + "Tokenizer");
 		
-		out.close();
 	}
 	
 }

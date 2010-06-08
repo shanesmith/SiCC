@@ -3,6 +3,7 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.Vector;
 
 public class GrammarDefinition {
@@ -44,6 +45,7 @@ public class GrammarDefinition {
 	}
 	
 	public Vector<GrammarRule> getStartRules() { return rules.get(startRuleName); }
+	public Set<String> getRuleNames() { return rules.keySet(); }
 	public String getStartRuleName() { return startRuleName; }
 	
 	public HashMap<String, HashMap<String, GrammarRule>> getTable() { return table; }

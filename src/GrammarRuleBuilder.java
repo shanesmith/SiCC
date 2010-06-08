@@ -216,7 +216,11 @@ public class GrammarRuleBuilder {
 	}
 	
 	private void evalAlternative() {
-		addRule(nameStack.peek(), operandStack.pop());
+		if (nameStack.size() == 1) {
+			addRule(nameStack.peek(), operandStack.pop());
+		} else {
+			addSubrule(nameStack.peek(), operandStack.pop());
+		}
 	}
 	
 	private void evalZeroPlus() throws Exception {
