@@ -25,12 +25,12 @@ public class GrammarRuleBuilder {
 	public Hashtable<String, Vector<GrammarRule>> getRules() { return rules; }
 	public Vector<GrammarRule> getRules(String rulename) { return rules.get(rulename); }
 	
-	public GrammarRuleBuilder (GrammarTokenizer tokenizer, Vector<String> tokenNames, GrammarDefinition grammardef) throws Exception {
+	public GrammarRuleBuilder (GrammarTokenizer tokenizer, Vector<String> tokenNames, GrammarDefinition grammardef, boolean first) throws Exception {
 		this.grammardef = grammardef;
-		parse(tokenizer, tokenNames);
+		parse(tokenizer, tokenNames, first);
 	}
 	
-	private void parse(GrammarTokenizer tokenizer, Vector<String> tokenNames) throws Exception {
+	private void parse(GrammarTokenizer tokenizer, Vector<String> tokenNames, boolean first) throws Exception {
 		
 		Token tok;
 		
@@ -47,11 +47,11 @@ public class GrammarRuleBuilder {
 		if (!tok.is("sep")) throw new Exception("(" + tok.line + ") Rule seperator -> not found after rule name!");
 		
 		// Parse the definition
-		parseDefinition(tokenizer, tokenNames);
+		parseDefinition(tokenizer, tokenNames, first);
 		
 	}
 	
-	private void parseDefinition(GrammarTokenizer tokenizer, Vector<String> tokenNames) throws Exception {
+	private void parseDefinition(GrammarTokenizer tokenizer, Vector<String> tokenNames, boolean first) throws Exception {
 		
 		Token tok;
 		
@@ -90,8 +90,11 @@ public class GrammarRuleBuilder {
 				pushOperand(new GrammarState(tok.value, type));
 			}
 			else if (tok.is("multi_child")) {
+				
 				multi_child = true;
+				
 				if (!getToken(tokenizer).is("eol")) throw new Exception("Expected eol after multi child token!");
+				
 				break;
 			}
 			else {
@@ -100,6 +103,11 @@ public class GrammarRuleBuilder {
 			
 			detectImplicitConcat(tok, peekToken(tokenizer));
 			
+		}
+		
+		if (first) {
+			pushOperator(opConcat);
+			pushOperand(new GrammarState("eof", GrammarState.TOKEN));
 		}
 		
 		while (!operatorStack.empty()) {
@@ -111,6 +119,10 @@ public class GrammarRuleBuilder {
 		}
 		
 		addRule(nameStack.pop(), operandStack.pop());
+		
+		for (GrammarRule rule : rules.get(this.name)) {
+			rule.setMultiChild(multi_child);
+		}
 		
 	}
 	

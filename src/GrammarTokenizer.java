@@ -82,8 +82,8 @@ class GrammarTokenizer {
         curState = transition(curState, (char)c);
       }
 
-      if (c == -1) {
-        return null;
+      if (c == -1 && value.isEmpty()) {
+    	return new Token("eof", "", lineNumber);
       } else if (accepting.containsKey(curState)) {
         pushChar(c);
         if (accepting.get(curState) == "skip") continue tokenLoop;

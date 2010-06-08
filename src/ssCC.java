@@ -102,7 +102,9 @@ public class ssCC {
 		
 		GrammarRunner runner = new GrammarRunner(grammardef, new TokenizerRunner(tokendef, reader));
 		
-		runner.run();
+		ASTNode parseTree = runner.run();
+		
+		println(parseTree);
 		
 	}
 	

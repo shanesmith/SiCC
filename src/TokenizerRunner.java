@@ -50,6 +50,10 @@ public class TokenizerRunner {
 				
 			}
 			
+			if (c == -1 && value.isEmpty()) {
+				return new Token("eof", "", line);
+			}
+			
 			if (curState.isAccepting()) {
 				pushChar(c);
 				

@@ -15,6 +15,7 @@ public class GrammarRule {
 	
 	public String getName() { return name; }
 	public boolean isMultiChild() { return multi_child; }
+	public void setMultiChild(boolean multi) { multi_child = multi; } 
 	public boolean isSubrule() { return subrule; }
 
 	public GrammarRule(String name, StateGraph<GrammarState> graph, boolean multi_child, GrammarDefinition grammardef) {
@@ -29,7 +30,7 @@ public class GrammarRule {
 		this.subrule = subrule;
 	}
 	
-	public void pushToStack(Stack<GrammarState> stateStack) {
+	public void pushGraphToStack(Stack<GrammarState> stateStack) {
 		graph.start().pushToStack(stateStack);
 	}
 	

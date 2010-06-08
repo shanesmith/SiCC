@@ -71,7 +71,7 @@ public class GrammarDefinition {
 			
 			Token next = tokenizer.nextToken();
 			
-			if (next == null) {
+			if (next.is("eof")) {
 				break;
 			} else if (next.is("eol")) {
 				continue;
@@ -79,7 +79,7 @@ public class GrammarDefinition {
 				tokenizer.pushToken();
 			}
 			
-			GrammarRuleBuilder rulebuilder = new GrammarRuleBuilder(tokenizer, tokenNames, this);
+			GrammarRuleBuilder rulebuilder = new GrammarRuleBuilder(tokenizer, tokenNames, this, startRuleName == null);
 			
 			for (String rulename : rulebuilder.getRules().keySet()) {
 				if (!rules.containsKey(rulename)) rules.put(rulename, new Vector<GrammarRule>());
@@ -87,7 +87,9 @@ public class GrammarDefinition {
 				rules.get(rulename).addAll(rulebuilder.getRules(rulename));
 			}
 			
-			if (startRuleName == null) startRuleName = rulebuilder.getName();
+			if (startRuleName == null) {
+				startRuleName = rulebuilder.getName();
+			}
 			
 		}
 		

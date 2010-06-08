@@ -105,8 +105,8 @@ public class TokenizerClassCreator {
 		out.println("        curState = transition(curState, (char)c);");
 		out.println("      }");
 		out.println();
-		out.println("      if (c == -1) {");
-		out.println("        return null;");
+		out.println("      if (c == -1 && value.isEmpty()) {");
+		out.println("        return new Token(\"eof\", \"\", lineNumber);");
 		out.println("      } else if (accepting.containsKey(curState)) {");
 		out.println("        pushChar(c);");
 		out.println("        if (accepting.get(curState) == \"skip\") continue tokenLoop;");
