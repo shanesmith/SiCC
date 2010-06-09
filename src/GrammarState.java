@@ -10,8 +10,6 @@ public class GrammarState {
 	
 	private String name;
 	
-	private GrammarState next;
-	
 	public GrammarState() {
 		this.type = EMPTY;
 	}
@@ -32,12 +30,6 @@ public class GrammarState {
 		
 	}
 	
-	public void next(GrammarState state) throws Exception { 
-		if (next != null) throw new Exception("State \"" + name + "\" already has a next!");
-		next = state; 
-	}
-	public GrammarState getNext() { return next; }
-	
 	public int getType() { return type; }
 	
 	public String getTypeString() {
@@ -48,14 +40,6 @@ public class GrammarState {
 			default:	
 			case UNKNOWN: return "?";
 		}
-	}
-	
-	public void pushToStack(Stack<GrammarState> stateStack) {
-		
-		if (next != null) next.pushToStack(stateStack);
-		
-		stateStack.push(this);
-		
 	}
 	
 	public String getName() { return name; }
