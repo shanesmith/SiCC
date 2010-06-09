@@ -31,7 +31,7 @@ public class GrammarRule {
 	}
 	
 	public void pushGraphToStack(Stack<GrammarState> stateStack) {
-		graph.start().pushToStack(stateStack);
+		stateStack.addAll(0, graph);
 	}
 	
 	public boolean hasGraph() { return graph != null; }
@@ -43,14 +43,19 @@ public class GrammarRule {
 			return follow;
 		}
 		
-		for (GrammarState state : graph) {
+		Iterator<GrammarState> it = graph.iterator();
+		
+		while(it.hasNext()) {
+			
+			GrammarState state = it.next(); 
+			
 			if (state.getType() == GrammarState.RULE && state.getName().equals(rulename)) {
 				
 				Stack<GrammarState> process = new Stack<GrammarState>();
 				
 				GrammarState processState;
 				
-				process.push(state.getNext());
+				process.push(it.next());
 				
 				while (!process.isEmpty()) {
 				
@@ -61,9 +66,6 @@ public class GrammarRule {
 							follow.addAll( grammardef.follow(this.getName()) );
 						}
 					}					
-					else if (processState.getType() == GrammarState.EMPTY) {						
-						process.push(processState.getNext());
-					}
 					else if (processState.getType() == GrammarState.TOKEN) {
 						follow.add(processState.getName());
 					}
@@ -104,14 +106,7 @@ public class GrammarRule {
 			
 			GrammarState state = process.pop();
 			
-			if (state.getType() == GrammarState.EMPTY) {
-				if (state.getNext() != null) {
-					process.push(state.getNext());
-				} else {
-					first.add(null);
-				}
-			}
-			else if (state.getType() == GrammarState.RULE) {
+			if (state.getType() == GrammarState.RULE) {
 				if (!grammardef.hasRule(state.getName())) throw new Exception("Undefined rule: " + state.getName());
 				
 				first.addAll( grammardef.first(state.getName()) );
