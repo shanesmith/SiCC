@@ -42,6 +42,8 @@ public class ssCC {
 			//sscc.runGrammar(new InputStreamReader(System.in));
 			
 			sscc.createClasses();
+			
+			println("DONE!");
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -115,6 +117,8 @@ public class ssCC {
 		createVisitorInterface();
 		
 		createASTNodeClasses();
+		
+		createParserClass();
 	}
 	
 	private void createTokenizerClass() throws Exception {
@@ -123,6 +127,14 @@ public class ssCC {
 		PrintWriter out = getWriter(prefix + "Tokenizer.java");
 		
 		(new TokenizerClassCreator(prefix, tokendef)).output(out);
+		
+		out.close();
+	}
+	
+	private void createParserClass() throws Exception {
+		PrintWriter out = getWriter(prefix + "Parser.java");
+		
+		(new ParserClassCreator(prefix, grammardef)).output(out);
 		
 		out.close();
 	}
@@ -185,7 +197,9 @@ public class ssCC {
 		out.println("  private ASTNode parent;");
 		out.println("  private Vector<ASTNode> children = new Vector<ASTNode>();");
 		out.println("  private String name, value;");
-		out.println("  public " + classname + " (String n, String v, ASTNode p) { name=n; value=v; parent=p; }");
+		out.println("  private boolean multi_child;");
+		out.println("  public " + classname + " (String n, String v, boolean m, ASTNode p) { name=n; value=v; multi_child=m; parent=p; }");
+		out.println("  public boolean isMultiChild() { return multi_child; }");
 		out.println("  public void addChild(ASTNode node) { children.add(node); }");
 		out.println("  public void removeChild(ASTNode node) { children.remove(node); }");
 		out.println("  public Vector<ASTNode> getChildren() { return children; }");
@@ -204,6 +218,8 @@ public class ssCC {
 	
 	private void createASTNodeSubClasses() throws Exception {
 		
+		String classname;
+		
 		String extendname = prefix + "ASTNode";
 		
 		PrintWriter out;
@@ -211,17 +227,29 @@ public class ssCC {
 		for (String rulename : grammardef.getRuleNames()) {
 			if (grammardef.getRules(rulename).get(0).isSubrule()) continue;
 			
-			String classname = prefix + "AST" + rulename + "Node";
+			classname = prefix + "AST" + rulename + "Node";
 			
 			out = getWriter(classname + ".java");
 			
 			out.println("class " + classname + " extends " + extendname + " {");
-			out.println("  public " + classname + " (String n, String v, ASTNode p) { super(n,v,p); }");
+			out.println("  public " + classname + " (String n, String v, boolean m, ASTNode p) { super(n,v,m,p); }");
 			out.println("} // end " + classname);
 			
 			out.close();
 			
 		}
+		
+		// ASTToken
+		
+		classname = prefix + "ASTToken";
+		
+		out = getWriter(classname + ".java");
+		
+		out.println("class " + classname + " extends " + extendname + " {");
+		out.println("  public " + classname + " (String n, String v, ASTNode p) { super(n,v,false,p); }" );
+		out.println("}");
+		
+		out.close();
 		
 	}
 	

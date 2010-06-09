@@ -35,6 +35,7 @@ public class GrammarRule {
 	}
 	
 	public boolean hasGraph() { return graph != null; }
+	public StateGraph<GrammarState> getGraph() { return graph; }
 	
 	public HashSet<String> getFollowOf(String rulename) throws Exception {
 		HashSet<String> follow = new HashSet<String>();
@@ -55,7 +56,7 @@ public class GrammarRule {
 				
 				GrammarState processState;
 				
-				process.push(it.next());
+				process.push(it.hasNext() ? it.next() : null);
 				
 				while (!process.isEmpty()) {
 				
