@@ -208,8 +208,6 @@ public class GrammarRuleBuilder {
 		b = operandStack.pop();
 		a = operandStack.pop();
 		
-		a.lastElement().next(b.firstElement());
-		
 		a.addAll(b);
 		
 		operandStack.push(a);
@@ -231,9 +229,7 @@ public class GrammarRuleBuilder {
 	
 		GrammarState repeat = new GrammarState(subrulename, GrammarState.RULE);
 		
-		subrulegraph.lastElement().next( repeat );
 		subrulegraph.addLast(repeat);
-		
 		
 		addSubrule(subrulename, subrulegraph);
 		addSubrule(subrulename, null);
