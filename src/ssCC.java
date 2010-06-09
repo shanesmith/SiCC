@@ -1,31 +1,6 @@
 
 import java.io.*;
 
-/*
-
-Tokenizer
-
-Parser
-	- consume tokens and create node tree
-	
-Validator (?)
-	- Perform checks to make sure grammar is LL(1)
-
-Interpreter
-	- iterate through tree and output java classes
-
-==========
-
-OUTPUT
-
-Tokenizer based on supplied tokens
-	
-Parser based on supplied grammar
-
-Implementation of Visitor pattern on parse tree
-
-*/
-
 public class ssCC {
 
 	private String[] args;
