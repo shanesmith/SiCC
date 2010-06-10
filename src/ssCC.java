@@ -255,38 +255,3 @@ public class ssCC {
 	public static void print(String s) { System.out.print(s); }
 	
 }
-
-/*tokenizer.defineToken("skip", "[\\s\\n\\r]");
-
-tokenizer.defineToken("comment", "// [^\\r\\n]* (\\r|\\n|\\r\\n)");
-
-tokenizer.defineToken("eol", ";");
-
-tokenizer.defineToken("lparen", "\\(");
-tokenizer.defineToken("rparen", "\\)");
-
-tokenizer.defineToken("bb", "{");
-tokenizer.defineToken("eb", "}");
-
-tokenizer.defineToken("eq", "==");
-tokenizer.defineToken("lt", "<");
-tokenizer.defineToken("gt", ">");
-tokenizer.defineToken("le", "<=");
-tokenizer.defineToken("ge", ">=");
-tokenizer.defineToken("gets", "=");
-
-tokenizer.defineToken("op", "\\+ | - | / | \\*");
-
-tokenizer.defineToken("do", "do");
-tokenizer.defineToken("while", "while");
-tokenizer.defineToken("if", "if");
-tokenizer.defineToken("elsif", "elsif");
-tokenizer.defineToken("else", "else");
-
-tokenizer.defineInternalToken("integer", "[0123456789]+");
-tokenizer.defineInternalToken("float", ":integer: (\\.:integer:)? | \\.:integer:");
-tokenizer.defineToken("number", ":float: | :float: [eE] [-\\+]? :integer:?");
-
-tokenizer.defineInternalToken("letter", "[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_]");
-tokenizer.defineInternalToken("digit", "[0123456789]");
-tokenizer.defineToken("id", ":letter: (:digit:|:letter:)*");*/
