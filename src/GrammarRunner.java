@@ -45,10 +45,10 @@ public class GrammarRunner {
 				curNode = curNode.getParent();
 				
 			} 
-			else if (curState.getType() == GrammarState.TOKEN) {
+			else if (curState.type == GrammarState.TOKEN) {
 				
-				if (!curState.getName().equals(curToken.name)) {
-					throw new Exception("Tokens do not match! read: \"" + curToken.name + "\"  stack: \"" + curState.getName() + "\"");
+				if (!curState.name.equals(curToken.name)) {
+					throw new Exception("Tokens do not match! read: \"" + curToken.name + "\"  stack: \"" + curState.name + "\"");
 				}
 				
 				if (curToken.is("eof")) return parseTree;
@@ -60,9 +60,9 @@ public class GrammarRunner {
 				curToken = tokenizer.nextToken();
 				
 			}
-			else if (curState.getType() == GrammarState.RULE) {
+			else if (curState.type == GrammarState.RULE) {
 				
-				GrammarRule newrule = grammardef.getProduction(curState.getName(), curToken.name);
+				GrammarRule newrule = grammardef.getProduction(curState.name, curToken.name);
 				
 				if (newrule != null) {
 

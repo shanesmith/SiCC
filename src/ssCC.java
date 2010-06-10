@@ -1,4 +1,14 @@
 
+/*
+ * TODO
+ * - Grammar definition does not rely on tokenizer definition
+ * 		- two pass on grammardef, rule names defined by what is on the LHS
+ * - Token ID (int)
+ * - Package and Project command line args
+ * - Error report in definition and input files
+ * - Example files
+ */
+
 import java.io.*;
 
 public class ssCC {

@@ -1,32 +1,26 @@
 
 public class GrammarState {
 
-	public static final int TOKEN = 1, RULE = 2;
+	public static final int UNKNOWN = 0, TOKEN = 1, RULE = 2;
 	
-	private int type;
+	public int type;
 	
-	private String name;
+	public String name;
 	
-	public GrammarState(String name, int type) throws Exception {
-		
-		if (type < 1 || type > 2) throw new Exception("Invalid state type: " + type);
-		
+	public GrammarState(String name, int type) throws Exception {		
 		this.name = name;
 		this.type = type;
-		
 	}
-	
-	public int getType() { return type; }
 	
 	public String getTypeString() {
 		switch (type) {
 			case TOKEN: return "T";
 			case RULE: return "R";
-			default: return "?";
+			case UNKNOWN:
+			default: 
+				return "?";
 		}
 	}
-	
-	public String getName() { return name; }
 	
 	public String toString() { return name + "[" + getTypeString() + "]"; }
 	

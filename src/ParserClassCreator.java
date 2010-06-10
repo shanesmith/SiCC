@@ -177,7 +177,7 @@ public class ParserClassCreator {
 					int i = 0;
 					out.println("      graph = new GrammarState[" + rule.getGraph().size() + "];");
 					for (GrammarState state : rule.getGraph()) {
-						out.println("      graph[" + (i++) + "] = new GrammarState(\"" + state.getName() + "\", " + state.getType() + ");");
+						out.println("      graph[" + (i++) + "] = new GrammarState(\"" + state.name + "\", " + state.type + ");");
 					}
 				} else {
 					out.println("      graph = null;");
