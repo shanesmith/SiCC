@@ -47,7 +47,6 @@ public class ParserClassCreator {
 		outputBuildTableFunction(out);
 		out.println();
 		
-		
 		outputGrammarRuleClass(out);
 		out.println();
 		

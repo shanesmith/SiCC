@@ -19,6 +19,7 @@ public class TokenizerClassCreator {
 	public void output(PrintWriter out) throws Exception {		
 		Hashtable<Integer, String> accepting = new Hashtable<Integer, String>();
 		
+		/*
 		out.println();
 		out.println("/*");
 		out.println();
@@ -33,8 +34,9 @@ public class TokenizerClassCreator {
 			out.println();	
 			
 		}
-		out.println("*/");
+		out.println("*\/");
 		out.println();
+		*/
 		
 		out.println("import java.io.*;");
 		out.println("import java.util.Hashtable;");
@@ -44,6 +46,14 @@ public class TokenizerClassCreator {
 		out.println();
 		
 		out.println("class " + prefix + "Tokenizer {");
+		out.println();
+		
+		int i = 1;
+		for(TokenDFA tdfa : tokendef.getAllTokenDFA()) {
+			if (tdfa.isInternal()) continue;
+			
+			out.println("  public static final int " + tdfa.name.toUpperCase() + "_TOKEN = " + (i++) + "; // " + tdfa.regexp);
+		}
 		out.println();
 		
 		out.println("  private static final char wildcard = " + (int)TokenizerState.wildcard + ";");
@@ -106,11 +116,13 @@ public class TokenizerClassCreator {
 		out.println("      }");
 		out.println();
 		out.println("      if (c == -1 && value.isEmpty()) {");
-		out.println("        return new Token(\"eof\", \"\", lineNumber);");
+		// TODO proper token type
+		out.println("        return new Token(0, \"eof\", \"\", lineNumber);");
 		out.println("      } else if (accepting.containsKey(curState)) {");
 		out.println("        pushChar(c);");
 		out.println("        if (accepting.get(curState) == \"skip\") continue tokenLoop;");
-		out.println("        return new " + prefix + "Token(accepting.get(curState), value, lineNumber);");
+		// TODO proper token type
+		out.println("        return new " + prefix + "Token(0, accepting.get(curState), value, lineNumber);");
 		out.println("      } else {");
 		out.println("        value += (char)c;");
 		out.println("        String error = \"(\" + lineNumber + \") No such token for char sequence: \";");
@@ -190,21 +202,12 @@ public class TokenizerClassCreator {
 			
 		}
 		out.println();
-		for (Integer i : accepting.keySet()) {
-			out.printf("    accepting.put(%d, \"%s\");", i, accepting.get(i));
+		for (Integer accept : accepting.keySet()) {
+			out.printf("    accepting.put(%d, \"%s\");", accept, accepting.get(accept));
 			out.println();
 		}
 		out.println("  } //end buildDFA()");
 		out.println();
-		
-		out.println("  public static void main(String[] args) {");
-		out.println("    " + prefix + "Token token;");
-		out.println("    try {");
-		out.println("      " + prefix + "Tokenizer mytok = new " + prefix + "Tokenizer(new StringReader(\" while (var <= 25.5) {\\n var = var + 1; \\n} // my while loop \"));");
-		out.println("      while ( (token=mytok.nextToken()) != null) System.out.println(token);");
-		out.println("    }");
-		out.println("    catch (Exception e) { e.printStackTrace(); }");
-		out.println("  }");
 		
 		out.println("} // end " + prefix + "Tokenizer");
 		

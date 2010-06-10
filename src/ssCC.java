@@ -127,9 +127,9 @@ public class ssCC {
 		PrintWriter out = getWriter(classname + ".java");
 		
 		out.println("class " + classname + " {");
-		out.println("  public int line;");
+		out.println("  public int line, type;");
 		out.println("  public String name, value;");
-		out.println("  public " + classname + " (String n, String v, int l) { name=n; value=v; line=l; }");
+		out.println("  public " + classname + " (int t, String n, String v, int l) { type=t; name=n; value=v; line=l; }");
 		out.println("  public String toString() { return \"(\" + line + \") \" + name + \" => \" + value; }");
 		out.println("  public boolean is (String str) { return str.equals(name); }");
 		out.println("} // end " + classname);

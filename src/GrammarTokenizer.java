@@ -83,11 +83,13 @@ class GrammarTokenizer {
       }
 
       if (c == -1 && value.isEmpty()) {
-    	return new Token("eof", "", lineNumber);
+		// TODO proper token type
+    	return new Token(0, "eof", "", lineNumber);
       } else if (accepting.containsKey(curState)) {
         pushChar(c);
         if (accepting.get(curState) == "skip") continue tokenLoop;
-        return new Token(accepting.get(curState), value, lineNumber);
+		// TODO proper token type
+        return new Token(0, accepting.get(curState), value, lineNumber);
       } else {
         value += (char)c;
         String error = "(" + lineNumber + ") No such token for char sequence: ";

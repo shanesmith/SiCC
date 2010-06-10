@@ -51,7 +51,8 @@ public class TokenizerRunner {
 			}
 			
 			if (c == -1 && value.isEmpty()) {
-				return new Token("eof", "", line);
+				// TODO proper token type
+				return new Token(0, "eof", null, line);
 			}
 			
 			if (curState.isAccepting()) {
@@ -62,7 +63,8 @@ public class TokenizerRunner {
 				if (tokdfa.name.equals(SKIP)) {
 					continue tokenLoop;
 				} else {
-					return new Token(tokdfa.name, value, line);
+					// TODO proper token type
+					return new Token(0, tokdfa.name, value, line);
 				}
 				
 			} else {

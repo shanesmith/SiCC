@@ -100,6 +100,7 @@ public class GrammarRuleBuilder {
 				throw new Exception("(" + tok.line + ") Invalid token type: " + tok.name);
 			}
 			
+			// TODO remove peekToken?
 			detectImplicitConcat(tok, peekToken(tokenizer));
 			
 		}
