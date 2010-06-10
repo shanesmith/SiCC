@@ -25,12 +25,12 @@ public class GrammarRuleBuilder {
 	public Hashtable<String, Vector<GrammarRule>> getRules() { return rules; }
 	public Vector<GrammarRule> getRules(String rulename) { return rules.get(rulename); }
 	
-	public GrammarRuleBuilder (GrammarTokenizer tokenizer, Vector<String> tokenNames, GrammarDefinition grammardef, boolean first) throws Exception {
+	public GrammarRuleBuilder (GrammarTokenizer tokenizer, GrammarDefinition grammardef, boolean first) throws Exception {
 		this.grammardef = grammardef;
-		parse(tokenizer, tokenNames, first);
+		parse(tokenizer, first);
 	}
 	
-	private void parse(GrammarTokenizer tokenizer, Vector<String> tokenNames, boolean first) throws Exception {
+	private void parse(GrammarTokenizer tokenizer, boolean first) throws Exception {
 		
 		Token tok;
 		
@@ -47,11 +47,11 @@ public class GrammarRuleBuilder {
 		if (!tok.is("sep")) throw new Exception("(" + tok.line + ") Rule seperator -> not found after rule name!");
 		
 		// Parse the definition
-		parseDefinition(tokenizer, tokenNames, first);
+		parseDefinition(tokenizer, first);
 		
 	}
 	
-	private void parseDefinition(GrammarTokenizer tokenizer, Vector<String> tokenNames, boolean first) throws Exception {
+	private void parseDefinition(GrammarTokenizer tokenizer, boolean first) throws Exception {
 		
 		Token tok;
 		
@@ -86,8 +86,7 @@ public class GrammarRuleBuilder {
 				pushOperand(new GrammarState(subrulename, GrammarState.RULE));
 			}
 			else if (tok.is("id")) {
-				int type = tokenNames.contains(tok.value) ? GrammarState.TOKEN : GrammarState.RULE;
-				pushOperand(new GrammarState(tok.value, type));
+				pushOperand(new GrammarState(tok.value, GrammarState.UNKNOWN));
 			}
 			else if (tok.is("multi_child")) {
 				

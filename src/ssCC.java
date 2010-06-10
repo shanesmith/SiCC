@@ -1,8 +1,6 @@
 
 /*
  * TODO
- * - Grammar definition does not rely on tokenizer definition
- * 		- two pass on grammardef, rule names defined by what is on the LHS
  * - Token ID (int)
  * - Package and Project command line args
  * - Error report in definition and input files
@@ -69,7 +67,7 @@ public class ssCC {
 				die(grammarFile + " is not a valid file!");
 			}
 			
-			grammardef = new GrammarDefinition(new FileReader(grammarFile), tokendef.getAllTokenNames());
+			grammardef = new GrammarDefinition(new FileReader(grammarFile));
 		}
 		
 	}
@@ -97,18 +95,17 @@ public class ssCC {
 	
 	public void createClasses() throws Exception {
 		createTokenClass();
-		createTokenizerClass();
 		
 		createVisitorInterface();
 		
 		createASTNodeClasses();
 		
-		createParserClass();
+		if (tokendef != null) createTokenizerClass();
+		
+		if (grammardef != null) createParserClass();
 	}
 	
 	private void createTokenizerClass() throws Exception {
-		if (tokendef == null) die("TokenizerDefinition has not be initialized!");
-		
 		PrintWriter out = getWriter(prefix + "Tokenizer.java");
 		
 		(new TokenizerClassCreator(prefix, tokendef)).output(out);

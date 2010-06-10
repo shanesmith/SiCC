@@ -15,33 +15,10 @@ public class GrammarDefinition {
 	private HashMap<String, HashMap<String, GrammarRule>> table = new HashMap<String, HashMap<String, GrammarRule>>();
 	
 	
-	public GrammarDefinition(Reader definitions, Vector<String> tokenNames) throws Exception {
-		parse(new GrammarTokenizer(definitions), tokenNames);
+	public GrammarDefinition(Reader definitions) throws Exception {
+		parse(new GrammarTokenizer(definitions));
 		
-		for (Vector<GrammarRule> rulesvector : rules.values()) {
-			
-			for (GrammarRule rule : rulesvector) {
-				
-				for (String terminal : rule.first()) {
-					
-					if (terminal == null) {
-						
-						for (String followterm : follow(rule.getName())) {
-							addToTable(rule.getName(), followterm, rule);
-						}
-						
-					} else {
-						
-						addToTable(rule.getName(), terminal, rule);
-						
-					}
-					
-				}
-				
-			}
-			
-		}
-		
+		buildTable();
 	}
 	
 	public Vector<GrammarRule> getStartRules() { return rules.get(startRuleName); }
@@ -67,7 +44,7 @@ public class GrammarDefinition {
 		table.get(rulename).put(terminal, rule);
 	}
 	
-	private void parse(GrammarTokenizer tokenizer, Vector<String> tokenNames) throws Exception {
+	private void parse(GrammarTokenizer tokenizer) throws Exception {
 		
 		while ( true ) {
 			
@@ -81,7 +58,7 @@ public class GrammarDefinition {
 				tokenizer.pushToken();
 			}
 			
-			GrammarRuleBuilder rulebuilder = new GrammarRuleBuilder(tokenizer, tokenNames, this, startRuleName == null);
+			GrammarRuleBuilder rulebuilder = new GrammarRuleBuilder(tokenizer, this, startRuleName == null);
 			
 			for (String rulename : rulebuilder.getRules().keySet()) {
 				if (!rules.containsKey(rulename)) rules.put(rulename, new Vector<GrammarRule>());
@@ -95,7 +72,51 @@ public class GrammarDefinition {
 			
 		}
 		
-		return;
+		for (Vector<GrammarRule> subrules : rules.values()) {
+			
+			for (GrammarRule rule : subrules) {
+				
+				if (!rule.hasGraph()) continue; 
+					
+				for (GrammarState state : rule.getGraph()) {
+					
+					if (state.type != GrammarState.UNKNOWN) continue;
+						
+					state.type = rules.containsKey(state.name) ? GrammarState.RULE : GrammarState.TOKEN;
+					
+				}
+					
+			}
+			
+		}
+		
+	}
+	
+	private void buildTable() throws Exception {
+		
+		for (Vector<GrammarRule> rulesvector : rules.values()) {
+			
+			for (GrammarRule rule : rulesvector) {
+				
+				for (String terminal : rule.first()) {
+					
+					if (terminal == null) {
+						
+						for (String followterm : follow(rule.getName())) {
+							addToTable(rule.getName(), followterm, rule);
+						}
+						
+					} else {
+						
+						addToTable(rule.getName(), terminal, rule);
+						
+					}
+					
+				}
+				
+			}
+			
+		}
 		
 	}
 	

@@ -16,9 +16,7 @@ public class GrammarState {
 		switch (type) {
 			case TOKEN: return "T";
 			case RULE: return "R";
-			case UNKNOWN:
-			default: 
-				return "?";
+			case UNKNOWN: default: return "?";
 		}
 	}
 	
