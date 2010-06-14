@@ -50,11 +50,12 @@ public class GrammarDefinition {
 			
 			Token next = tokenizer.nextToken();
 			
-			if (next.is("eof")) {
+			if (next.type == GrammarTokenizer.EOF_TOKEN) {
 				break;
-			} else if (next.is("eol")) {
+			} else if (next.type == GrammarTokenizer.EOL_TOKEN) {
 				continue;
 			} else {
+				// TODO remove pushToken?
 				tokenizer.pushToken();
 			}
 			

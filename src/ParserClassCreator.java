@@ -99,7 +99,7 @@ public class ParserClassCreator {
 		out.println("          throw new Exception(\"Tokens do not match! read: \\\"\" + curToken.name + \"\\\"  stack: \\\"\" + curState.name + \"\\\"\");");
 		out.println("        }");
 		out.println();
-		out.println("        if (curToken.is(\"eof\")) return parseTree;");
+		out.println("        if (curToken.name.equals(\"eof\")) return parseTree;");
 		out.println();
 		out.println("        curNode.addChild(new ASTToken(curToken.name, curToken.value, curNode));");
 		out.println();		

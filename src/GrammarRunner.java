@@ -51,7 +51,7 @@ public class GrammarRunner {
 					throw new Exception("Tokens do not match! read: \"" + curToken.name + "\"  stack: \"" + curState.name + "\"");
 				}
 				
-				if (curToken.is("eof")) return parseTree;
+				if (curToken.type == GrammarTokenizer.EOF_TOKEN) return parseTree;
 				
 				curNode.addChild(new ASTNode(curToken.name, curNode, curToken.value));
 				

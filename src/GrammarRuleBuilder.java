@@ -37,14 +37,14 @@ public class GrammarRuleBuilder {
 		// Get Name
 		tok = getToken(tokenizer);
 		
-		if (!tok.is("id")) throw new Exception("(" + tok.line + ") Rule must start with a valid ID!");
+		if (tok.type != GrammarTokenizer.ID_TOKEN) throw new Exception("(" + tok.line + ") Rule must start with a valid ID!");
 		
 		name = tok.value;
 		
 		// Get Seperator ->
 		tok = getToken(tokenizer);
 		
-		if (!tok.is("sep")) throw new Exception("(" + tok.line + ") Rule seperator -> not found after rule name!");
+		if (tok.type != GrammarTokenizer.SEP_TOKEN) throw new Exception("(" + tok.line + ") Rule seperator -> not found after rule name!");
 		
 		// Parse the definition
 		parseDefinition(tokenizer, first);
@@ -57,16 +57,20 @@ public class GrammarRuleBuilder {
 		
 		nameStack.push(name);
 		
-		while ( !(tok=getToken(tokenizer)).is("eol") ) {
+		while ( true ) {
 			
-			if (tok.is("op")) {
+			tok = getToken(tokenizer);
+			
+			if (tok.type == GrammarTokenizer.EOL_TOKEN) break;
+			
+			if (tok.type == GrammarTokenizer.OP_TOKEN) {
 				pushOperator(tok.value.charAt(0));
 			}
-			else if (tok.is("lparen")) {
+			else if (tok.type == GrammarTokenizer.LPAREN_TOKEN) {
 				pushNewName();
 				pushOperator(tok.value.charAt(0), false);
 			}
-			else if (tok.is("rparen")) {
+			else if (tok.type == GrammarTokenizer.RPAREN_TOKEN) {
 				while ( true ) {
 					
 					if (operatorStack.empty()) throw new Exception("Could not find beggining (");
@@ -85,14 +89,14 @@ public class GrammarRuleBuilder {
 				
 				pushOperand(new GrammarState(subrulename, GrammarState.RULE));
 			}
-			else if (tok.is("id")) {
+			else if (tok.type == GrammarTokenizer.ID_TOKEN) {
 				pushOperand(new GrammarState(tok.value, GrammarState.UNKNOWN));
 			}
-			else if (tok.is("multi_child")) {
+			else if (tok.type == GrammarTokenizer.MULTI_CHILD_TOKEN) {
 				
 				multi_child = true;
 				
-				if (!getToken(tokenizer).is("eol")) throw new Exception("Expected eol after multi child token!");
+				if (getToken(tokenizer).type != GrammarTokenizer.EOL_TOKEN) throw new Exception("Expected eol after multi child token!");
 				
 				break;
 			}
@@ -254,8 +258,8 @@ public class GrammarRuleBuilder {
 	private void detectImplicitConcat(Token tokLeft, Token tokRight) throws Exception {
 		if (tokLeft == null || tokRight == null) return;
 		
-		if (tokLeft.is("id") || tokLeft.is("rparen") || (tokLeft.is("op") && !tokLeft.value.equals("|"))) {
-			if (tokRight.is("id") || tokRight.is("lparen")) {
+		if (tokLeft.type == GrammarTokenizer.ID_TOKEN || tokLeft.type == GrammarTokenizer.RPAREN_TOKEN || (tokLeft.type == GrammarTokenizer.OP_TOKEN && !tokLeft.value.equals("|"))) {
+			if (tokRight.type == GrammarTokenizer.ID_TOKEN || tokRight.type == GrammarTokenizer.LPAREN_TOKEN) {
 				pushOperator(opConcat);
 			}
 		}
