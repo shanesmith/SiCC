@@ -54,6 +54,7 @@ public class TokenizerClassCreator {
 			
 			out.println("  public static final int " + tdfa.name.toUpperCase() + "_TOKEN = " + (i++) + "; // " + tdfa.regexp);
 		}
+		out.println("  public static final int EOF_TOKEN = -1;");
 		out.println();
 		
 		out.println("  private static final char wildcard = " + (int)TokenizerState.wildcard + ";");
@@ -116,13 +117,11 @@ public class TokenizerClassCreator {
 		out.println("      }");
 		out.println();
 		out.println("      if (c == -1 && value.isEmpty()) {");
-		// TODO proper token type
-		out.println("        return new Token(0, \"eof\", \"\", lineNumber);");
+		out.println("        return createToken(\"eof\", \"\", lineNumber);");
 		out.println("      } else if (accepting.containsKey(curState)) {");
 		out.println("        pushChar(c);");
 		out.println("        if (accepting.get(curState) == \"skip\") continue tokenLoop;");
-		// TODO proper token type
-		out.println("        return new " + prefix + "Token(0, accepting.get(curState), value, lineNumber);");
+		out.println("        return createToken(accepting.get(curState), value, lineNumber);");
 		out.println("      } else {");
 		out.println("        value += (char)c;");
 		out.println("        String error = \"(\" + lineNumber + \") No such token for char sequence: \";");
@@ -207,6 +206,17 @@ public class TokenizerClassCreator {
 			out.println();
 		}
 		out.println("  } //end buildDFA()");
+		out.println();
+		
+		out.println("  private " + prefix + "Token createToken(String name, String value, int lineNumber) throws Exception {");
+		for(TokenDFA tdfa : tokendef.getAllTokenDFA()) {
+			if (tdfa.isInternal()) continue;
+			
+			out.println("    if ( name.equals(\"" + tdfa.name + "\") ) return new " + prefix + "Token(" + tdfa.name.toUpperCase() + "_TOKEN, name, value, lineNumber);");
+		}
+		out.println("    if ( name.equals(\"eof\") ) return new " + prefix + "Token(EOF_TOKEN, name, value, lineNumber);");
+		out.println("    throw new Exception(\"Unknown token name: \" + name);");
+		out.println("  }");
 		out.println();
 		
 		out.println("} // end " + prefix + "Tokenizer");

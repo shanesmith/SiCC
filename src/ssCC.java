@@ -96,13 +96,15 @@ public class ssCC {
 	public void createClasses() throws Exception {
 		createTokenClass();
 		
-		createVisitorInterface();
-		
-		createASTNodeClasses();
-		
 		if (tokendef != null) createTokenizerClass();
 		
-		if (grammardef != null) createParserClass();
+		if (grammardef != null) {
+			createParserClass();
+			
+			createVisitorInterface();
+			
+			createASTNodeClasses();
+		}
 	}
 	
 	private void createTokenizerClass() throws Exception {
