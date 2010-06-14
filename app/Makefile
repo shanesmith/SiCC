@@ -4,7 +4,7 @@ ifdef PREFIX
 	FLAG = -p
 endif
 
-all: create compile
+all: clean create compile
 
 run: all
 	java App
@@ -16,4 +16,7 @@ compile:
 	javac *.java
 
 clean:
-	rm *.class
+	rm -f *.class
+
+clean-all: clean
+	rm -f AST* Parser.javaf Tokenizer.java Token.java Visitor.java

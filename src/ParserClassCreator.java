@@ -25,7 +25,7 @@ public class ParserClassCreator {
 		out.println("import java.util.HashMap;");
 		out.println("import java.util.Stack;");
 		
-		out.println("class " + classname + " {");
+		out.println("public class " + classname + " {");
 		out.println();
 		
 		out.println("  private static final String startRuleName = \"" + startRuleName + "\";");

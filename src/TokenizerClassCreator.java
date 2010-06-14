@@ -19,25 +19,6 @@ public class TokenizerClassCreator {
 	public void output(PrintWriter out) throws Exception {		
 		Hashtable<Integer, String> accepting = new Hashtable<Integer, String>();
 		
-		/*
-		out.println();
-		out.println("/*");
-		out.println();
-		for(TokenDFA tdfa : tokendef.getAllTokenDFA()) {
-			String def = "  ";
-			
-			if (tdfa.isInternal()) def += ":";
-			
-			def += tdfa.name + ": " + tdfa.regexp;
-			
-			out.println(def);
-			out.println();	
-			
-		}
-		out.println("*\/");
-		out.println();
-		*/
-		
 		out.println("import java.io.*;");
 		out.println("import java.util.Hashtable;");
 		out.println("import java.util.Vector;");
@@ -45,7 +26,7 @@ public class TokenizerClassCreator {
 		out.println("import java.util.ListIterator;");
 		out.println();
 		
-		out.println("class " + prefix + "Tokenizer {");
+		out.println("public class " + prefix + "Tokenizer {");
 		out.println();
 		
 		int i = 1;

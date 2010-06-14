@@ -1,18 +1,28 @@
 
 /*
  * TODO
- * - Token ID (int)
  * - Package and Project command line args
+ * - ability to write own tokenizer or parser
  * - Error report in definition and input files
  * - Example files
  */
+
+// ssCC --package MyApp --prefix BOB tokens.def grammar.def
+
+// ssCC --tokenizer-only tokens.def
+// ssCC --parser-only grammar.def
+
 
 import java.io.*;
 
 public class ssCC {
 
+	private static final int TOKENIZER_ONLY = 1;
+	private static final int PARSER_ONLY = 2;
+	
 	private String[] args;
-	private String prefix = "";
+	private int only = 0;
+	private String prefix = "", packagename;
 	private File tokenFile, grammarFile;
 	private TokenizerDefinition tokendef;
 	private GrammarDefinition grammardef;
@@ -41,34 +51,65 @@ public class ssCC {
 		parseArgs();
 	}
 	
-	private void parseArgs() throws Exception {
-		if (args == null || args.length == 0) return;
+	private void parseArgs() throws Exception {		
+		boolean options = true;
 		
-		int i = 0; 
-		
-		if (args[i].equals("-p")) {
-			if (args.length <= ++i) die("Missing prefix!");
-			prefix = args[i++];
-		}
-		
-		if (args.length <= i) die("Missing token definition file path!");
-		tokenFile = new File(args[i++]);
-		
-		if (!tokenFile.isFile()) {
-			die (tokenFile + " is not a valid file!");
-		}
-		
-		tokendef = new TokenizerDefinition(new FileReader(tokenFile));
-		
-		if (args.length > i) {
-			grammarFile = new File(args[i++]);
+		for(int i = 0; i < args.length; i++) {
 			
-			if (!grammarFile.isFile()) {
-				die(grammarFile + " is not a valid file!");
+			if (args[i].startsWith("--")) {
+				
+				if (options == false) throw new Exception("Misplaced option " + args[i]);
+				
+				if (args[i].equals("--tokenizer-only")) {
+					if (only != 0) throw new Exception("\"only\" already defined!");
+					only = TOKENIZER_ONLY;
+				}
+				else if (args[i].equals("--parser-only")) {
+					if (only != 0) throw new Exception("\"only\" already defined!");
+					only = PARSER_ONLY;
+				}
+				else if (args[i].equals("--package")) {
+					packagename = args[++i];
+					if (packagename.startsWith("-")) throw new Exception("Invalid package name: " + packagename);
+				}
+				else if (args[i].equals("--prefix")) {
+					prefix = args[++i];
+					if (prefix.startsWith("-")) throw new Exception("Invalid prefix: " + packagename);
+				}
+				
+			} else {
+				options = false;
+				
+				if (only == TOKENIZER_ONLY || (only == 0 && tokendef == null)) {
+					tokenFile = new File(args[i]);
+					
+					if (!tokenFile.isFile()) {
+						throw new Exception (tokenFile + " is not a valid file!");
+					}
+					
+					tokendef = new TokenizerDefinition(new FileReader(tokenFile));
+				}
+				else if (only == PARSER_ONLY || (only == 0 && tokendef != null)) {
+					grammarFile = new File(args[i++]);
+					
+					if (!grammarFile.isFile()) {
+						die(grammarFile + " is not a valid file!");
+					}
+					
+					grammardef = new GrammarDefinition(new FileReader(grammarFile));
+				}
 			}
 			
-			grammardef = new GrammarDefinition(new FileReader(grammarFile));
 		}
+		
+		
+		if (tokendef == null && only != PARSER_ONLY) {
+			throw new Exception("Missing token definition file!");
+		}
+		
+		if (grammardef == null && only == PARSER_ONLY) {
+			throw new Exception("Missing grammar definition file!");
+		}		
 		
 	}
 	
@@ -128,7 +169,7 @@ public class ssCC {
 		
 		PrintWriter out = getWriter(classname + ".java");
 		
-		out.println("class " + classname + " {");
+		out.println("public class " + classname + " {");
 		out.println("  public int line, type;");
 		out.println("  public String name, value;");
 		out.println("  public " + classname + " (int t, String n, String v, int l) { type=t; name=n; value=v; line=l; }");
@@ -177,7 +218,7 @@ public class ssCC {
 		
 		out.println("import java.util.Vector;");
 		out.println();
-		out.println("class " + classname + " {");
+		out.println("public class " + classname + " {");
 		out.println("  private ASTNode parent;");
 		out.println("  private Vector<ASTNode> children = new Vector<ASTNode>();");
 		out.println("  private String name, value;");
@@ -215,7 +256,7 @@ public class ssCC {
 			
 			out = getWriter(classname + ".java");
 			
-			out.println("class " + classname + " extends " + extendname + " {");
+			out.println("public class " + classname + " extends " + extendname + " {");
 			out.println("  public " + classname + " (String n, String v, boolean m, ASTNode p) { super(n,v,m,p); }");
 			out.println("} // end " + classname);
 			
@@ -229,7 +270,7 @@ public class ssCC {
 		
 		out = getWriter(classname + ".java");
 		
-		out.println("class " + classname + " extends " + extendname + " {");
+		out.println("public class " + classname + " extends " + extendname + " {");
 		out.println("  public " + classname + " (String n, String v, ASTNode p) { super(n,v,false,p); }" );
 		out.println("}");
 		
@@ -237,8 +278,21 @@ public class ssCC {
 		
 	}
 	
-	private static PrintWriter getWriter(String filename) throws Exception {
-		return new PrintWriter(new BufferedWriter(new FileWriter(filename)));
+	private PrintWriter getWriter(String filename) throws Exception {
+		if (packagename != null && !packagename.isEmpty()) {
+			new File(packagename).mkdir();
+			
+			filename = packagename + "/" + filename;
+		}
+		
+		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
+		
+		if (packagename != null && !packagename.isEmpty()) {
+			out.println("package " + packagename + ";");
+			out.println();
+		}
+		
+		return out;
 	}
 	
 	public static void die() { exit(1); }

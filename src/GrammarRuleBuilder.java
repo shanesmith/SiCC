@@ -57,51 +57,57 @@ public class GrammarRuleBuilder {
 		
 		nameStack.push(name);
 		
+	tokenloop:
 		while ( true ) {
 			
 			tok = getToken(tokenizer);
 			
-			if (tok.type == GrammarTokenizer.EOL_TOKEN) break;
+			switch(tok.type) {
+				case GrammarTokenizer.EOL_TOKEN:
+					break tokenloop;
 			
-			if (tok.type == GrammarTokenizer.OP_TOKEN) {
-				pushOperator(tok.value.charAt(0));
-			}
-			else if (tok.type == GrammarTokenizer.LPAREN_TOKEN) {
-				pushNewName();
-				pushOperator(tok.value.charAt(0), false);
-			}
-			else if (tok.type == GrammarTokenizer.RPAREN_TOKEN) {
-				while ( true ) {
+				case GrammarTokenizer.OP_TOKEN:
+					pushOperator(tok.value.charAt(0));
+					break;
 					
-					if (operatorStack.empty()) throw new Exception("Could not find beggining (");
+				case GrammarTokenizer.LPAREN_TOKEN:
+					pushNewName();
+					pushOperator(tok.value.charAt(0), false);
+					break;
 					
-					if (operatorStack.peek() == '(') {
-						operatorStack.pop();
-						break;
+				case GrammarTokenizer.RPAREN_TOKEN:
+					while ( true ) {
+						
+						if (operatorStack.empty()) throw new Exception("Could not find beggining (");
+						
+						if (operatorStack.peek() == '(') {
+							operatorStack.pop();
+							break;
+						}
+					
+						evaluate();
 					}
-				
-					evaluate();
-				}
-				
-				String subrulename = nameStack.pop();
-				
-				addSubrule(subrulename, operandStack.pop());
-				
-				pushOperand(new GrammarState(subrulename, GrammarState.RULE));
-			}
-			else if (tok.type == GrammarTokenizer.ID_TOKEN) {
-				pushOperand(new GrammarState(tok.value, GrammarState.UNKNOWN));
-			}
-			else if (tok.type == GrammarTokenizer.MULTI_CHILD_TOKEN) {
-				
-				multi_child = true;
-				
-				if (getToken(tokenizer).type != GrammarTokenizer.EOL_TOKEN) throw new Exception("Expected eol after multi child token!");
-				
-				break;
-			}
-			else {
-				throw new Exception("(" + tok.line + ") Invalid token type: " + tok.name);
+					
+					String subrulename = nameStack.pop();
+					
+					addSubrule(subrulename, operandStack.pop());
+					
+					pushOperand(new GrammarState(subrulename, GrammarState.RULE));
+					break;
+					
+				case GrammarTokenizer.ID_TOKEN:
+					pushOperand(new GrammarState(tok.value, GrammarState.UNKNOWN));
+					break;
+					
+				case GrammarTokenizer.MULTI_CHILD_TOKEN:
+					multi_child = true;
+					
+					if (getToken(tokenizer).type != GrammarTokenizer.EOL_TOKEN) throw new Exception("Expected eol after multi child token!");
+					
+					break tokenloop;
+					
+				default:
+					throw new Exception("(" + tok.line + ") Invalid token type: " + tok.name);
 			}
 			
 			// TODO remove peekToken?
