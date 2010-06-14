@@ -1,28 +1,3 @@
-
-/*
-
-id: :alpha:(:digit:|:alpha:)*
-
-:alpha: [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_]
-
-op: [\*\?\|]
-
-eol: (\n|\r|\r\n)
-
-:digit: [0123456789]
-
-rparen: \)
-
-multi_child: \[>1\]
-
-skip: \#[^\n\r]:eol:
-
-lparen: \(
-
-sep: ->
-
-*/
-
 import java.io.*;
 import java.util.Hashtable;
 import java.util.Vector;
@@ -30,6 +5,16 @@ import java.util.Stack;
 import java.util.ListIterator;
 
 class GrammarTokenizer {
+
+  public static final int ID_TOKEN = 1; // :alpha:(:digit:|:alpha:)*
+  public static final int OP_TOKEN = 2; // [\*\?\|]
+  public static final int EOL_TOKEN = 3; // (\n|\r|\r\n)
+  public static final int RPAREN_TOKEN = 4; // \)
+  public static final int MULTI_CHILD_TOKEN = 5; // \[>1\]
+  public static final int SKIP_TOKEN = 6; // \#[^\n\r]:eol:
+  public static final int LPAREN_TOKEN = 7; // \(
+  public static final int SEP_TOKEN = 8; // ->
+  public static final int EOF_TOKEN = -1;
 
   private static final char wildcard = 3;
   private static final char neg = 4;
@@ -83,13 +68,11 @@ class GrammarTokenizer {
       }
 
       if (c == -1 && value.isEmpty()) {
-		// TODO proper token type
-    	return new Token(0, "eof", "", lineNumber);
+        return createToken("eof", "", lineNumber);
       } else if (accepting.containsKey(curState)) {
         pushChar(c);
         if (accepting.get(curState) == "skip") continue tokenLoop;
-		// TODO proper token type
-        return new Token(0, accepting.get(curState), value, lineNumber);
+        return createToken(accepting.get(curState), value, lineNumber);
       } else {
         value += (char)c;
         String error = "(" + lineNumber + ") No such token for char sequence: ";
@@ -520,4 +503,17 @@ class GrammarTokenizer {
     accepting.put(1, "id");
   } //end buildDFA()
 
-} // end GrammarTokenizer
+  private Token createToken(String name, String value, int lineNumber) throws Exception {
+    if ( name.equals("id") ) return new Token(ID_TOKEN, name, value, lineNumber);
+    if ( name.equals("op") ) return new Token(OP_TOKEN, name, value, lineNumber);
+    if ( name.equals("eol") ) return new Token(EOL_TOKEN, name, value, lineNumber);
+    if ( name.equals("rparen") ) return new Token(RPAREN_TOKEN, name, value, lineNumber);
+    if ( name.equals("multi_child") ) return new Token(MULTI_CHILD_TOKEN, name, value, lineNumber);
+    if ( name.equals("skip") ) return new Token(SKIP_TOKEN, name, value, lineNumber);
+    if ( name.equals("lparen") ) return new Token(LPAREN_TOKEN, name, value, lineNumber);
+    if ( name.equals("sep") ) return new Token(SEP_TOKEN, name, value, lineNumber);
+    if ( name.equals("eof") ) return new Token(EOF_TOKEN, name, value, lineNumber);
+    throw new Exception("Unknown token name: " + name);
+  }
+
+} // end Tokenizer

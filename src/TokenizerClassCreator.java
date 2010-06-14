@@ -193,10 +193,11 @@ public class TokenizerClassCreator {
 			out.println();
 			out.println("    // state " + s.id);
 			out.println("    trans = new Hashtable<Character, Integer>();");
-			out.printf("    DFA.put(%d, trans);", s.id); out.println(); 
+			out.println("    DFA.put(" + s.id + ", trans);"); 
 			
 			for (Character c : s.getTransitionCharacters()) {
-				out.printf("    trans.put((char)%d, %d);", (int)c, s.doTransition(c).getID()); out.println();
+				out.printf("    trans.put((char)%d, %d);", (int)c, s.doTransition(c).getID());
+				out.println();
 			}
 			
 		}
