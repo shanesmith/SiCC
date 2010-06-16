@@ -15,7 +15,8 @@ public class ssCC {
 	
 	private String[] args;
 	private int only = 0;
-	private String prefix = "", packagename;
+	private String prefix = "";
+	private String packagename;
 	private File tokenFile, grammarFile;
 	private TokenizerDefinition tokendef;
 	private GrammarDefinition grammardef;
@@ -27,11 +28,16 @@ public class ssCC {
 			
 			sscc.createClasses();
 			
-			println("DONE!");
+			System.out.println("DONE!");
+		}
+		catch (TokenizerDefinitionException e) {
+			System.out.println(e);
+		}
+		catch (ArgumentParsingException e) {
+			System.out.println(e);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			die();
 		}
 		
 	}
@@ -39,67 +45,72 @@ public class ssCC {
 	private ssCC(String[] args) throws Exception {
 		this.args = args;
 		
+		// parse the passed arguments
 		parseArgs();
+		
+		if (only != PARSER_ONLY) {
+			if (tokenFile == null) throw new ArgumentParsingException("Missing token definition file!");
+			if (!tokenFile.isFile()) throw new ArgumentParsingException (tokenFile + " is not a valid file!");
+			tokendef = new TokenizerDefinition(new FileReader(tokenFile));
+		}
+		
+		if (only != TOKENIZER_ONLY) {
+			if (grammarFile == null) throw new ArgumentParsingException("Missing grammar definition file!");
+			if (!grammarFile.isFile()) throw new ArgumentParsingException (grammarFile + " is not a valid file!");
+			grammardef = new GrammarDefinition(new FileReader(grammarFile));
+		}
+		
 	}
 	
 	private void parseArgs() throws Exception {		
-		boolean options = true;
 		
 		for(int i = 0; i < args.length; i++) {
 			
-			if (args[i].startsWith("--")) {
+			if (args[i].startsWith("-")) {
 				
-				if (options == false) throw new Exception("Misplaced option " + args[i]);
+				if (tokenFile != null || grammarFile != null) throw new ArgumentParsingException("Cannot place options after file definitions.");
 				
 				if (args[i].equals("--tokenizer-only")) {
-					if (only != 0) throw new Exception("\"only\" already defined!");
+					if (only != 0) throw new ArgumentParsingException("\"only\" already defined!");
 					only = TOKENIZER_ONLY;
 				}
 				else if (args[i].equals("--parser-only")) {
-					if (only != 0) throw new Exception("\"only\" already defined!");
+					if (only != 0) throw new ArgumentParsingException("\"only\" already defined!");
 					only = PARSER_ONLY;
 				}
 				else if (args[i].equals("--package")) {
+					if (i == args.length-1) throw new ArgumentParsingException("Package name not defined");
 					packagename = args[++i];
-					if (packagename.startsWith("-")) throw new Exception("Invalid package name: " + packagename);
+					if (!packagename.matches("[a-zA-Z]\\w*")) throw new ArgumentParsingException("Invalid package name: " + packagename);
 				}
 				else if (args[i].equals("--prefix")) {
+					if (i == args.length-1) throw new ArgumentParsingException("Prefix not defined");
 					prefix = args[++i];
-					if (prefix.startsWith("-")) throw new Exception("Invalid prefix: " + packagename);
+					if (!prefix.matches("[a-zA-Z]\\w*")) throw new ArgumentParsingException("Invalid prefix: " + packagename);
+				}
+				else {
+					throw new ArgumentParsingException("Unknown option: " + args[i]);
 				}
 				
 			} else {
-				options = false;
 				
-				if (only == TOKENIZER_ONLY || (only == 0 && tokendef == null)) {
+				switch(only) {
+				case TOKENIZER_ONLY:
+					if (tokenFile != null) throw new ArgumentParsingException("Token file has already been set.");
 					tokenFile = new File(args[i]);
-					
-					if (!tokenFile.isFile()) {
-						throw new Exception (tokenFile + " is not a valid file!");
-					}
-					
-					tokendef = new TokenizerDefinition(new FileReader(tokenFile));
+					break;
+				case PARSER_ONLY:
+					if (grammarFile != null) throw new ArgumentParsingException("Grammar file has already been set.");
+					grammarFile = new File(args[i]);
+					break;
+				default:
+					if (tokenFile == null) tokenFile = new File(args[i]);
+					else if (grammarFile == null) grammarFile = new File(args[i]);
+					else throw new ArgumentParsingException("Token and Grammar files have already been set.");
 				}
-				else if (only == PARSER_ONLY || (only == 0 && tokendef != null)) {
-					grammarFile = new File(args[i++]);
-					
-					if (!grammarFile.isFile()) {
-						die(grammarFile + " is not a valid file!");
-					}
-					
-					grammardef = new GrammarDefinition(new FileReader(grammarFile));
-				}
+				
 			}
 			
-		}
-		
-		
-		if (tokendef == null && only != PARSER_ONLY) {
-			throw new Exception("Missing token definition file!");
-		}
-		
-		if (grammardef == null && only == PARSER_ONLY) {
-			throw new Exception("Missing grammar definition file!");
 		}		
 		
 	}
@@ -110,7 +121,7 @@ public class ssCC {
 		TokenizerRunner runner = new TokenizerRunner(tokendef, reader);
 		
 		while ( (tok=runner.nextToken()) != null ) {
-			println(tok);
+			System.out.println(tok);
 		}
 		
 	}
@@ -121,14 +132,16 @@ public class ssCC {
 		
 		ASTNode parseTree = runner.run();
 		
-		println(parseTree);
+		System.out.println(parseTree);
 		
 	}
 	
 	public void createClasses() throws Exception {
 		createTokenClass();
 		
-		if (tokendef != null) createTokenizerClass();
+		if (tokendef != null) {
+			createTokenizerClass();
+		}
 		
 		if (grammardef != null) {
 			createParserClass();
@@ -289,26 +302,9 @@ public class ssCC {
 		return out;
 	}
 	
-	public static void die() { exit(1); }
-	public static void end() { exit(0); }
-	
-	public static void die(Object msg) { exit(msg, 1); }
-	public static void end(Object msg) { exit(msg, 0); }
-	
-	public static void exit(Object msg, int status) { println(msg); System.exit(status); }
-	public static void exit(int status) { System.exit(status); }
-	
-	public static void println(int num) { while(num-- > 0) println(); }
-	
-	public static void println(Object o, int ln) { println(o.toString(), ln); }
-	public static void println(String s, int ln) { System.out.println(s); println(ln); }
-	
-	public static void println() { println(""); }
-	public static void println(Object o) { println(o.toString()); }
-	public static void println(String s) { System.out.println(s); }
-	
-	
-	public static void print(Object o) { print(o.toString()); }
-	public static void print(String s) { System.out.print(s); }
+	@SuppressWarnings("serial")
+	private class ArgumentParsingException extends Exception {
+		public ArgumentParsingException(String message) { super(message); }
+	}
 	
 }

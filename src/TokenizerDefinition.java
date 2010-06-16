@@ -2,7 +2,6 @@ import java.io.LineNumberReader;
 import java.io.Reader;
 import java.util.Collection;
 import java.util.Hashtable;
-import java.util.Vector;
 
 
 public class TokenizerDefinition {
@@ -11,10 +10,9 @@ public class TokenizerDefinition {
 	
 	private TokenDFA masterDFA;
 	
-	private boolean finalized = false;
-	
 	public TokenizerDefinition(Reader definitions) throws Exception {
 		parse(new LineNumberReader(definitions));
+		constructMasterDFA();
 	}
 	
 	private void parse(LineNumberReader definition) throws Exception {
@@ -25,48 +23,40 @@ public class TokenizerDefinition {
 		
 		while( (line=definition.readLine()) != null ) {
 			
+			int lineNumber = definition.getLineNumber();
+			
 			line = line.trim();
 			
-			if (line.isEmpty() || line.charAt(0) == '#') continue;
+			if (line.isEmpty() || line.startsWith("#")) continue;
 			
-			internal = (line.charAt(0) == ':');
+			internal = (line.startsWith(":"));
 			
 			if (internal) line = line.substring(1);
 			
+			if (line.indexOf(':') == -1) throw new TokenizerDefinitionException("Invalid token definition.", lineNumber);
+			
 			name = line.substring(0, line.indexOf(':'));
+			
+			if (name.isEmpty()) throw new TokenizerDefinitionException("Token name not defined.", lineNumber);
+			if (!name.matches("\\w+")) throw new TokenizerDefinitionException("Invalid token name \"" + name + "\"", lineNumber);
 			
 			regexp = line.substring(line.indexOf(':')+1);
 			
-			defineToken(name, regexp, internal);
+			if (regexp.isEmpty()) throw new TokenizerDefinitionException("Regular expression not defined for token \"" + name + "\"", lineNumber);
+			
+			TokenDFA tok = new TokenDFA(name, regexp, this, internal);
+			
+			if (tokenDFAs.containsKey(name)) {
+				tokenDFAs.get(name).alternNFA(tok.NFA);
+			} else {
+				tokenDFAs.put(name, tok);
+			}
 			
 		}
 		
 	}
 	
-	public void defineToken(String name, String definition) throws Exception {
-		defineToken(name, definition, false);
-	}
-	
-	public void defineInternalToken(String name, String definition) throws Exception {
-		defineToken(name, definition, true);
-	}
-	
-	public void defineToken(String name, String definition, boolean isInternal) throws Exception {
-		finalized = false;
-		
-		TokenDFA tok = new TokenDFA(name, definition, this, isInternal);
-		
-		if (tokenDFAs.containsKey(name)) {
-			tokenDFAs.get(name).alternNFA(tok.NFA);
-		} else {
-			tokenDFAs.put(name, tok);
-		}
-	}
-	
-	public void finalize() throws Exception {
-		// mash all non-internal tokenDFAs into on masterDFA
-		
-		finalized = true;
+	private void constructMasterDFA() throws Exception {
 		
 		TokenizerState.resetNextID();
 		
@@ -93,21 +83,10 @@ public class TokenizerDefinition {
 		
 	}
 	
-	public TokenDFA getTokenDFA(String name) {
-		return tokenDFAs.get(name);
-	}
+	public TokenDFA getTokenDFA(String name) { return tokenDFAs.get(name); }
 	
 	public Collection<TokenDFA> getAllTokenDFA() { return tokenDFAs.values(); }
 	
-	public Vector<String> getAllTokenNames() { return new Vector<String>(tokenDFAs.keySet()); }
-	
-	public TokenDFA getMasterTokenDFA() throws Exception {
-		if (!finalized) {
-			finalize();
-			finalized = true;
-		}
-		
-		return masterDFA;
-	}
+	public TokenDFA getMasterTokenDFA() throws Exception { return masterDFA; }
 	
 }

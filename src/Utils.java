@@ -5,8 +5,6 @@
 
 public class Utils {
 	
-	
-	
 	/*
 	 * Returns whether or not character c is found in array
 	 */
@@ -17,6 +15,7 @@ public class Utils {
 		return false;
 	}
 	
+	
 	public static String escape(Character c) {
 		return escape(c.toString());
 	}
@@ -24,5 +23,6 @@ public class Utils {
 	public static String escape(String str) {
 		return str.replace(" ", "\\s").replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n");
 	}
+	
 	
 }
