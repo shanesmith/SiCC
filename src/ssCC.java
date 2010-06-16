@@ -1,17 +1,10 @@
 
 /*
  * TODO
- * - Package and Project command line args
- * - ability to write own tokenizer or parser
  * - Error report in definition and input files
+ * - Testing
  * - Example files
  */
-
-// ssCC --package MyApp --prefix BOB tokens.def grammar.def
-
-// ssCC --tokenizer-only tokens.def
-// ssCC --parser-only grammar.def
-
 
 import java.io.*;
 
@@ -31,8 +24,6 @@ public class ssCC {
 		
 		try {
 			ssCC sscc = new ssCC(args);
-			
-			//sscc.runGrammar(new InputStreamReader(System.in));
 			
 			sscc.createClasses();
 			
@@ -170,10 +161,13 @@ public class ssCC {
 		PrintWriter out = getWriter(classname + ".java");
 		
 		out.println("public class " + classname + " {");
-		out.println("  public int line, type;");
+		out.println("  public int line=-1, type=0;");
 		out.println("  public String name, value;");
 		out.println("  public " + classname + " (int t, String n, String v, int l) { type=t; name=n; value=v; line=l; }");
-		out.println("  public String toString() { return \"(\" + line + \") \" + name + \" => \" + value; }");
+		out.println("  public " + classname + " (String n, String v, int l) { name=n; value=v; line=l; }");
+		out.println("  public " + classname + " (String n, String v) { name=n; value=v; }");
+		out.println("  public " + classname + " (String n) { name=n; }");
+		out.println("  public String toString() { return (line != -1 ? \"(\" + line + \") \" : \"\") + name + (value != null ? \" => \" + value : \"\"); }");
 		out.println("  public boolean is (String str) { return str.equals(name); }");
 		out.println("} // end " + classname);
 		
