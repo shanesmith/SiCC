@@ -108,7 +108,7 @@ public class ParserClassCreator {
 		out.println();
 		out.println("        GrammarRule newrule = table.get(curState.name).get(curToken.name);");
 		out.println();				
-		out.println("        if (newrule == null) throw new Exception(\"Token \\\"\" + curToken.name + \"\\\" does not exist for rule \\\"\" + curState.name + \"\\\");");
+		out.println("        if (newrule == null) throw new Exception(\"Token \\\"\" + curToken.name + \"\\\" does not exist for rule \\\"\" + curState.name + \"\\\"\");");
 		out.println();
 		out.println("        if (!newrule.subrule) {");
 		out.println("          if (parseTree == null) {");

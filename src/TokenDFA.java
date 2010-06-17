@@ -1,6 +1,6 @@
 
-/*
- * A DFA based on a token definitions
+/**
+ * TokenDFA represents a token definition with a DFA
  */
 
 import java.util.*;
@@ -9,45 +9,53 @@ public class TokenDFA {
 
 	private static int nextPos = 1;
 	
-	private int position = nextPos++;
-	
-	/*
-	 * A reference back to the Tokenizer that holds this DFA, needed for embedding tokens
-	 */
-	TokenizerDefinition tokendef;	
-	
-	String name, regexp;
-	
-	boolean internal = false;
-	
-	/*
-	 * Stacks used to build the NFA
-	 */
-	Stack<StateGraph<TokenizerNFAState>> operandStack = new Stack<StateGraph<TokenizerNFAState>>();
-	Stack<Character> operatorStack = new Stack<Character>();
-	
-	/*
-	 * Graphs
-	 */
-	StateGraph<TokenizerNFAState> NFA; // intermediate NFA
-	StateGraph<TokenizerDFAState> DFA; // resulting DFA
-	
-	/*
+	/**
 	 * Character code used to define concatenation of characters
 	 */
 	static final char opConcat = 2;
 	
-	/*
+	/**
 	 * Useful character lists 
 	 */
 	static final char[] ignoreList = { 32/*space*/, 9/*tab*/ };
 	static final char[] operatorlist = { '?', '*', ':', '(', ')', '+', '^', '|', '[', ']', '#' };
 	
-	/*
-	 * Constructors
+	/**
+	 * The position of this token in the definition file
+	 */
+	private int position = nextPos++;
+	
+	/**
+	 * A reference back to the Tokenizer that holds this DFA, needed for embedding tokens
+	 */
+	TokenizerDefinition tokendef;	
+	
+	/**
+	 * The token's name and regexp
+	 */
+	String name, regexp;
+	
+	/**
+	 * Whether the token is defined as internal
+	 */
+	boolean internal;
+	
+	/**
+	 * Stacks used to build the NFA
+	 */
+	Stack<StateGraph<TokenizerNFAState>> operandStack = new Stack<StateGraph<TokenizerNFAState>>();
+	Stack<Character> operatorStack = new Stack<Character>();
+	
+	/**
+	 * Graphs
+	 */
+	StateGraph<TokenizerNFAState> NFA; // intermediate NFA
+	StateGraph<TokenizerDFAState> DFA; // resulting DFA
+	
+	/**
+	 * Constructor
 	 */
 	public TokenDFA(String name, StateGraph<TokenizerNFAState> NFA) throws Exception {
-
 		this.name = name;
 		this.NFA = NFA;
 		
@@ -56,12 +64,7 @@ public class TokenDFA {
 		convertToDFA();
 	}
 	
-	public TokenDFA(String name, String regexp, TokenizerDefinition tokendef) throws Exception {
-		this(name, regexp, tokendef, false);
-	}
-	
-	// TODO token name validation?
-	public TokenDFA(String name, String regexp, TokenizerDefinition tokendef, boolean internal) throws Exception {
+	public TokenDFA(String name, String regexp, boolean internal, TokenizerDefinition tokendef) throws Exception {
 		
 		this.name = name;
 		this.regexp = regexp;
