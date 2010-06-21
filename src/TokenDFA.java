@@ -53,7 +53,7 @@ public class TokenDFA {
 	StateGraph<TokenizerDFAState> DFA; // resulting DFA
 	
 	/**
-	 * Constructor
+	 * Constructor. Simply takes a name and an NFA, and converts it to a DFA.
 	 */
 	public TokenDFA(String name, StateGraph<TokenizerNFAState> NFA) throws Exception {
 		this.name = name;
@@ -64,6 +64,9 @@ public class TokenDFA {
 		convertToDFA();
 	}
 	
+	/**
+	 * Constructor.
+	 */
 	public TokenDFA(String name, String regexp, boolean internal, TokenizerDefinition tokendef) throws Exception {
 		
 		this.name = name;
@@ -72,7 +75,7 @@ public class TokenDFA {
 		this.internal = internal;
 		
 		if (regexp == null) throw new TokenizerException("Token regexp cannot be null!", this);
-		if (regexp.length() == 0) throw new TokenizerException("Token regexp cannot be empty!", this);
+		if (regexp.isEmpty()) throw new TokenizerException("Token regexp cannot be empty!", this);
 		if (tokendef == null) throw new TokenizerException("Passed tokenizer cannot be null!", this);
 		
 		// remove characters to ignore from the regexp
@@ -86,18 +89,9 @@ public class TokenDFA {
 		// convert the NFA to a DFA
 		convertToDFA();
 	}
-
-	public void setInternal(boolean set) { internal = set; }
-	public boolean isInternal() { return internal; }
 	
-	public String getRegexp() { return regexp; }
-	
-	public TokenizerDFAState getStartState() { return DFA.start(); }
-	
-	public int getPosition() { return position; }
-	
-	/*
-	 * Returns whether or not this DFA matches the given string
+	/**
+	 * Returns whether this DFA matches the given string
 	 */
 	public boolean matches(String str) {
 		
@@ -115,6 +109,9 @@ public class TokenDFA {
 		
 	}
 	
+	/**
+	 * Adds the given NFA as an alternative.
+	 */
 	public void alternNFA(StateGraph<TokenizerNFAState> alt) throws Exception {
 		TokenizerNFAState start = new TokenizerNFAState();
 		TokenizerNFAState end = new TokenizerNFAState();
@@ -132,13 +129,14 @@ public class TokenDFA {
 		convertToDFA();
 	}
 	
-	/*
-	 * Create an intermediate NFA based on the regexp
+	/**
+	 * Create an intermediate NFA based on the regexp previously set.
 	 */
 	private void createNFA() throws Exception {
 		
 		char c;
 		
+		// defines whether we are currently reading in a character class
 		boolean charclass = false;
 		
 		// iterate over the regexp's characters
@@ -146,34 +144,33 @@ public class TokenDFA {
 			
 			c = regexp.charAt(pos);
 			
-			if (isOperator(c)) {
-				// operator				
+			if (isOperator(c)) { // operator				
 				
-				if (c == ':') {
+				if (c == ':') { 
 					// embed token
 					
-					String name = "";
+					String embedTokenName = "";
 					
 					while ( true ) {
 						
-						if (pos + 1 == regexp.length()) throw new TokenizerException("Could not find end ':' of embed token.", this);
+						if (pos == regexp.length() - 1) throw new TokenizerException("Could not find end ':' of embed token name.", this);
 						
 						c = regexp.charAt(++pos);
 						
 						if (c == ':') break;
 						
-						name += String.valueOf(c);
+						embedTokenName += String.valueOf(c);
 					}
 					
-					TokenDFA embedToken = tokendef.getTokenDFA(name);
+					TokenDFA embedToken = tokendef.getTokenDFA(embedTokenName);
 					
-					if (embedToken == null) throw new TokenizerException("Cannot find token \"" + name + "\" for embedding!", this);
+					if (embedToken == null) throw new TokenizerException("Cannot find token \"" + embedTokenName + "\" for embedding!", this);
 					
 					// push a _copy_ of the token's graph
 					pushOperand(copyGraph(embedToken.NFA));
 				}
 				else if (c == ')') {
-					// end of a subpattern, evaluate inside
+					// end of a sub-pattern, evaluate inside
 
 					while ( true ) {
 						
@@ -215,13 +212,11 @@ public class TokenDFA {
 				else {
 					// default to simple push
 					pushOperator(c);
-					
 				}
 				
-			} 
-			else {
-				// operand
+			} else { // operand
 				
+				// first step, deal with special characters
 				if (c == '\\') {
 					// escaped character
 					
@@ -235,8 +230,7 @@ public class TokenDFA {
 						case 'r': c = '\r'; break;
 						case 't': c = '\t'; break;
 						case '.': case '\\': break;
-						default:
-							if (!isOperator(c)) throw new TokenizerException("Invalid escaping of character " + c, this);
+						default: if (!isOperator(c)) throw new TokenizerException("Invalid escaping of character " + c, this);
 					}
 					
 				}
@@ -244,6 +238,7 @@ public class TokenDFA {
 					c = TokenizerState.wildcard;
 				}
 				
+				// second step, add to appropriate place
 				if (charclass) {
 					addToCharClass(c);
 				} else {				
@@ -259,7 +254,7 @@ public class TokenDFA {
 			
 		}
 		
-		// done reading in regexp, finish operators
+		// done reading in regexp, finish evaluating operators
 		while (!operatorStack.empty()) {
 			c = operatorStack.peek();
 			
@@ -280,7 +275,7 @@ public class TokenDFA {
 		NFA.lastElement().setAccepting(true);
 	}
 	
-	/*
+	/**
 	 * Convert the intermediate NFA to a DFA 
 	 */
 	private void convertToDFA() throws Exception {
@@ -354,7 +349,7 @@ public class TokenDFA {
 		
 	}
 	
-	/*
+	/**
 	 * Deep copy of the graph (both edges and vertices), and make (this) the owner
 	 */
 	public StateGraph<TokenizerNFAState> copyGraph(StateGraph<TokenizerNFAState> graph) {
@@ -369,13 +364,16 @@ public class TokenDFA {
 		return newgraph;
 	}
 	
+	/**
+	 * Returns the epsilon closure of the given state 
+	 */
 	public static Vector<TokenizerNFAState> epsilonClosure(TokenizerNFAState s) {
 		Vector<TokenizerNFAState> states = new Vector<TokenizerNFAState>();
 		states.add(s);
 		return epsilonClosure(states);
 	}
 	
-	/*
+	/**
 	 * Returns the epsilon closure (all states attainable by epsilon transitions only) of the given states
 	 */
 	public static Vector<TokenizerNFAState> epsilonClosure(Vector<TokenizerNFAState> states) {
@@ -401,14 +399,17 @@ public class TokenDFA {
 		return closure;
 	}
 	
+	/**
+	 * Returns all states attainable from the given state with the transition character specified
+	 */
 	public static Vector<TokenizerNFAState> move(TokenizerDFAState s, Character c) {
 		Vector<TokenizerDFAState> states = new Vector<TokenizerDFAState>();
 		states.add(s);
 		return move(states, c);
 	}
 	
-	/*
-	 * Get all states attainable by a specific character match from the given states
+	/**
+	 * Returns all states attainable from the given states with the transition character specified
 	 */
 	public static Vector<TokenizerNFAState> move(Vector<TokenizerDFAState> states, Character c) {
 		Vector<TokenizerNFAState> result = new Vector<TokenizerNFAState>();
@@ -424,9 +425,8 @@ public class TokenDFA {
 		return result;
 	}
 	
-	/*
-	 * Test for an implicit concat between pos and pos+1
-	 * push concat operator to the operatorStack if true
+	/**
+	 * Test for an implicit concat between pos and pos+1 of the string and push the concat operator to the operatorStack if true
 	 */
 	private void detectImplicitConcat (String str, int pos) throws Exception {
 		
@@ -453,8 +453,8 @@ public class TokenDFA {
 		
 	}
 	
-	/*
-	 *  push operator
+	/**
+	 * Push operator
 	 */
 	private void pushOperator(Character c) throws Exception { pushOperator(c, true); }
 	private void pushOperator(Character c, boolean eval) throws Exception {
@@ -469,17 +469,12 @@ public class TokenDFA {
 		operatorStack.push(c);
 	}
 	
-	private void addToCharClass(Character c) {
-		StateGraph<TokenizerNFAState> charclass = operandStack.pop();
-		
-		charclass.firstElement().addTransition(c, charclass.lastElement());
-		
-		operandStack.push(charclass);
-	}
 	
-	/*
-	 * Create a new graph from the character match and push it to the stack
+	
+	/**
+	 * Push operand
 	 */
+	private void pushOperand(StateGraph<TokenizerNFAState> sg) { operandStack.push(sg); }
 	private void pushOperand(Character c) {
 		
 		TokenizerNFAState s1 = new TokenizerNFAState(this);
@@ -495,9 +490,19 @@ public class TokenDFA {
 		pushOperand(graph);
 		
 	}
-	private void pushOperand(StateGraph<TokenizerNFAState> sg) { operandStack.push(sg); }
 	
-	/*
+	/**
+	 *	Adds the given character to the top of the operand stack as a character class alternative 
+	 */
+	private void addToCharClass(Character c) {
+		StateGraph<TokenizerNFAState> charclass = operandStack.pop();
+		
+		charclass.firstElement().addTransition(c, charclass.lastElement());
+		
+		operandStack.push(charclass);
+	}
+	
+	/**
 	 * Pop an operator from the stack and evaluate
 	 */
 	private void evaluate() throws Exception{
@@ -532,8 +537,8 @@ public class TokenDFA {
 		}
 	}
 	
-	/*
-	 * Add a default transition to a new state, which is added at the end and becomes the new "accepting" state.
+	/**
+	 * Add a default transition to a new state, which is added at the end of the graph and becomes the new "accepting" state.
 	 * 
 	 * The old "accepting" state is left alone to become a dead end.
 	 */
@@ -549,7 +554,7 @@ public class TokenDFA {
 		operandStack.push(g);
 	}
 	
-	/*
+	/**
 	 * Evaluate a concat of operands
 	 */
 	private void evalConcat() {
@@ -564,7 +569,7 @@ public class TokenDFA {
 		operandStack.push(a);
 	}
 	
-	/*
+	/**
 	 * Evaluate an alternative operation
 	 */
 	private void evalAlternative() {
@@ -590,7 +595,7 @@ public class TokenDFA {
 		operandStack.push(a);
 	}
 	
-	/*
+	/**
 	 * Evaluate a zero-plus operation
 	 */
 	private void evalZeroPlus() {
@@ -611,11 +616,8 @@ public class TokenDFA {
 		operandStack.push(g);
 	}
 	
-	/*
+	/**
 	 * Evaluate a one-plus operation
-	 * 
-	 * Same as evalZeroPlus(), but don't create a transition from start to end,
-	 * forcing at least one pass through the graph
 	 */
 	private void evalOnePlus() {
 		StateGraph<TokenizerNFAState> g = operandStack.pop();
@@ -634,11 +636,8 @@ public class TokenDFA {
 		operandStack.push(g);
 	}
 	
-	/*
+	/**
 	 * Evaluate an optional operation
-	 * 
-	 * Same as evalZeroPlus(), but don't create a transition from lastElement to firstElement,
-	 * which removes the loop
 	 */
 	private void evalOptional() {
 		StateGraph<TokenizerNFAState> g = operandStack.pop();
@@ -657,7 +656,7 @@ public class TokenDFA {
 		operandStack.push(g);
 	}
 	
-	/*
+	/**
 	 * Returns true if precedence of opLeft <= opRight
 	 */
 	private boolean precedence (char opLeft, char opRight) {
@@ -683,8 +682,14 @@ public class TokenDFA {
 		return true;
 	}
 	
+	/**
+	 * Returns whether the character is an operator 
+	 */
 	private static boolean isOperator(char c) { return Utils.in_array(c, operatorlist); }
 	
+	/**
+	 * Returns whether both graphs are equal by comparing each item
+	 */
 	public static boolean equals(Vector<TokenizerNFAState> va, Vector<TokenizerNFAState> vb) {
 		
 		if (va.size() != vb.size()) return false;
@@ -693,17 +698,24 @@ public class TokenDFA {
 		Iterator<TokenizerNFAState> itb = vb.iterator();
 		
 		while (ita.hasNext() && itb.hasNext()) {
-			if (!equals(ita.next(), itb.next())) return false;
+			if (ita.next().getID() != itb.next().getID()) return false;
 		}
 		
 		return true;
 		
 	}
 	
-	public static boolean equals(TokenizerState a, TokenizerState b) {
-		return a.getID() == b.getID();
-	}
-	
+	/**
+	 * A bunch of getters.
+	 */
+	public boolean isInternal() { return internal; }
+	public String getRegexp() { return regexp; }
+	public TokenizerDFAState getStartState() { return DFA.start(); }
+	public int getPosition() { return position; }
+
+	/**
+	 * String representation.
+	 */
 	public String toString() {
 		String str = "[" + name + "]";
 		

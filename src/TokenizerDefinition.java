@@ -6,11 +6,12 @@ import java.util.Hashtable;
 /**
  * Creates a DFA meant for a tokenizer.
  * 
- * A token definition is written per line in the following format:
+ * A token definition is written one per line in the following format:
  * 
  * 		[:] token_name : token_regexp
  * 
  * The first colon is optional and indicates that the token is internal.
+ * Spaces and tabs are ignored.
  */
 public class TokenizerDefinition {
 

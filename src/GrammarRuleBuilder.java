@@ -3,58 +3,72 @@ import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
 
-
+/**
+ * Builds a rule with its accompanying sub-rules 
+ */
 public class GrammarRuleBuilder {
 
-	private String name;
+	/**
+	 * Used for the naming of sub-rules
+	 */
 	private static int nameCounter = 1;
 	
+	/**
+	 * Used for processing
+	 */
+	private static final char opConcat = 2;
+	
+	/**
+	 * The name of the rule being built
+	 */
+	private String name;
+	
+	/**
+	 * A reference to the grammar definition object
+	 */
 	private GrammarDefinition grammardef;
 	
+	/**
+	 * Whether this (main) rule has the multi-child flag set
+	 */
 	private boolean multi_child = false;
 	
-	private Stack<StateGraph<GrammarState>> operandStack = new Stack<StateGraph<GrammarState>>();
-	private Stack<Character> operatorStack = new Stack<Character>();
-	private Stack<String> nameStack = new Stack<String>();
-	
+	/**
+	 * The set of built rules, including main and sub-rules
+	 */
 	private Hashtable<String, Vector<GrammarRule>> rules = new Hashtable<String, Vector<GrammarRule>>();
 	
-	static final char opConcat = 2;
+	/**
+	 * Stacks used for processing
+	 */
+	private Stack<StateGraph<GrammarState>> operandStack = new Stack<StateGraph<GrammarState>>();
+	private Stack<Character> operatorStack = new Stack<Character>();
+	private Stack<String> nameStack = new Stack<String>();	
 	
+	/**
+	 * A bunch of getters
+	 */
 	public String getName() { return name; }
 	public Hashtable<String, Vector<GrammarRule>> getRules() { return rules; }
 	public Vector<GrammarRule> getRules(String rulename) { return rules.get(rulename); }
 	
-	public GrammarRuleBuilder (GrammarTokenizer tokenizer, GrammarDefinition grammardef, boolean first) throws Exception {
+	/**
+	 * Constructor.
+	 */
+	public GrammarRuleBuilder (String name, GrammarTokenizer tokenizer, GrammarDefinition grammardef, boolean first) throws Exception {
+		this.name = name;
 		this.grammardef = grammardef;
 		parse(tokenizer, first);
 	}
 	
+	/**
+	 * Parse definition using the given tokenizer (assumed to be positioned at the beginning of the RHS).  
+	 */
 	private void parse(GrammarTokenizer tokenizer, boolean first) throws Exception {
 		
 		Token tok;
 		
-		// Get Name
-		tok = getToken(tokenizer);
-		
-		if (tok.type != GrammarTokenizer.ID_TOKEN) throw new Exception("(" + tok.line + ") Rule must start with a valid ID!");
-		
-		name = tok.value;
-		
-		// Get Seperator ->
-		tok = getToken(tokenizer);
-		
-		if (tok.type != GrammarTokenizer.SEP_TOKEN) throw new Exception("(" + tok.line + ") Rule seperator -> not found after rule name!");
-		
-		// Parse the definition
-		parseDefinition(tokenizer, first);
-		
-	}
-	
-	private void parseDefinition(GrammarTokenizer tokenizer, boolean first) throws Exception {
-		
-		Token tok;
-		
+		// include main rule name in the name stack
 		nameStack.push(name);
 		
 	tokenloop:

@@ -1,6 +1,9 @@
 
 import java.util.Vector;
 
+/**
+ * A parse tree node, used by GrammarRunner
+ */
 public class ASTNode {
 
 	private String name, value;
