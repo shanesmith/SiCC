@@ -1,27 +1,69 @@
 
 import java.util.*;
 
+/**
+ *  A GrammarRule represents a single rule from a given grammar.
+ *  
+ *  The rule may be a sub-rule, meaning a section of another rule.
+ *  
+ *  ex: 
+ *  	The following rule
+ *  
+ *  		A -> B (C D)*
+ *  
+ *  	would be split into the following
+ *  
+ *  		A    -> B A{1}*
+ *  		A{1} -> C D
+ *
+ */
 public class GrammarRule {
 
+	/**
+	 * The rule's name
+	 */
 	private String name;
 	
+	/**
+	 * Whether the rule has the [>1] multi-child flag
+	 */
 	private boolean multi_child = false;
 	
+	/**
+	 * Whether the rule is a sub-rule
+	 */
 	private boolean subrule = false;
 	
-	private GrammarDefinition grammardef;
-	
+	/**
+	 * The rule's graph
+	 */
 	private StateGraph<GrammarState> graph;
 	
+	/**
+	 * A reference back to the grammar definition
+	 */
+	private GrammarDefinition grammardef;
+
+	/**
+	 * A bunch of getters and setters
+	 */
 	public String getName() { return name; }
 	public boolean isMultiChild() { return multi_child; }
 	public void setMultiChild(boolean multi) { multi_child = multi; } 
 	public boolean isSubrule() { return subrule; }
+	public boolean hasGraph() { return graph != null; }
+	public StateGraph<GrammarState> getGraph() { return graph; }
 
+	/**
+	 * Constructor.
+	 */
 	public GrammarRule(String name, StateGraph<GrammarState> graph, boolean multi_child, GrammarDefinition grammardef) {
 		this(name, graph, multi_child, grammardef, false);
 	}
-	
+
+	/**
+	 * Constructor.
+	 */
 	public GrammarRule(String name, StateGraph<GrammarState> graph, boolean multi_child, GrammarDefinition grammardef, boolean subrule) {
 		this.name = name;
 		this.graph = graph;
@@ -30,15 +72,14 @@ public class GrammarRule {
 		this.subrule = subrule;
 	}
 	
-	public void pushGraphToStack(Stack<GrammarState> stateStack) {
-		stateStack.addAll(0, graph);
-	}
-	
-	public boolean hasGraph() { return graph != null; }
-	public StateGraph<GrammarState> getGraph() { return graph; }
-	
+	/**
+	 * Returns the result of FOLLOW(rulename) on this rule,
+	 *  in other words finds all terminals in this rule that can be found
+	 *  directly after the given rulename
+	 */
 	public HashSet<String> getFollowOf(String rulename) throws Exception {
 		HashSet<String> follow = new HashSet<String>();
+		
 		
 		if (graph == null) {
 			return follow;

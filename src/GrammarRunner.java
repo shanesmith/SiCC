@@ -79,7 +79,7 @@ public class GrammarRunner {
 					}
 					
 					if (newrule.hasGraph()) {
-						newrule.pushGraphToStack(stateStack);
+						stateStack.addAll(0, newrule.getGraph());
 					}
 				}
 				

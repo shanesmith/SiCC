@@ -74,7 +74,7 @@ public class GrammarRuleBuilder {
 	tokenloop:
 		while ( true ) {
 			
-			tok = getToken(tokenizer);
+			tok = tokenizer.nextToken();
 			
 			switch(tok.type) {
 				case GrammarTokenizer.EOL_TOKEN:
@@ -116,7 +116,7 @@ public class GrammarRuleBuilder {
 				case GrammarTokenizer.MULTI_CHILD_TOKEN:
 					multi_child = true;
 					
-					if (getToken(tokenizer).type != GrammarTokenizer.EOL_TOKEN) throw new Exception("Expected eol after multi child token!");
+					if (tokenizer.nextToken().type != GrammarTokenizer.EOL_TOKEN) throw new Exception("Expected eol after multi child token!");
 					
 					break tokenloop;
 					
@@ -130,6 +130,7 @@ public class GrammarRuleBuilder {
 		}
 		
 		if (first) {
+			// implicit EOF token for the first rule of the grammar
 			pushOperator(opConcat);
 			pushOperand(new GrammarState("eof", GrammarState.TOKEN));
 		}
@@ -150,14 +151,23 @@ public class GrammarRuleBuilder {
 		
 	}
 	
+	/**
+	 * Push a new sub-rule name onto the name stack
+	 */
 	private void pushNewName() {
 		nameStack.push(getNewName());
 	}
 	
+	/**
+	 * Creates a different sub-rule name on every call (based on the current rule's name)  
+	 */
 	private String getNewName() {
-		return name + "{" + nameCounter++ + "}";
+		return name + "{" + (nameCounter++) + "}";
 	}
 	
+	/**
+	 * Push an operand onto the operand stack
+	 */
 	private void pushOperand(GrammarState state) {
 		StateGraph<GrammarState> sg = new StateGraph<GrammarState>();
 		
@@ -166,8 +176,8 @@ public class GrammarRuleBuilder {
 		operandStack.push(sg);
 	}
 	
-	/*
-	 *  push operator
+	/**
+	 * Push an operator onto the operator stack
 	 */
 	private void pushOperator(Character c) throws Exception { pushOperator(c, true); }
 	private void pushOperator(Character c, boolean eval) throws Exception {
@@ -182,24 +192,33 @@ public class GrammarRuleBuilder {
 		operatorStack.push(c);
 	}
 	
+
+	/**
+	 * Add a sub-rule to the rule set 
+	 */
 	private void addSubrule(String rulename, StateGraph<GrammarState> rulegraph) {
-		GrammarRule rule = new GrammarRule(rulename, rulegraph, false, grammardef, true);
-		
-		addRule(rule);
+		addRule(new GrammarRule(rulename, rulegraph, false, grammardef, true));
 	}
 	
+	/**
+	 * Add a regular rule to the rule set
+	 */
 	private void addRule(String rulename, StateGraph<GrammarState> rulegraph) {
-		GrammarRule rule = new GrammarRule(rulename, rulegraph, false, grammardef);
-		
-		addRule(rule);
+		addRule(new GrammarRule(rulename, rulegraph, false, grammardef));
 	}
-	
+
+	/**
+	 * Add the given rule to the rule set
+	 */
 	private void addRule(GrammarRule rule) {
 		if (!rules.containsKey(rule.getName())) rules.put(rule.getName(), new Vector<GrammarRule>());
 		
 		rules.get(rule.getName()).add(rule);
 	}
 	
+	/**
+	 * Evaluate the operator on top of the operator stack
+	 */
 	private void evaluate() throws Exception{
 		char op = operatorStack.pop().charValue();
 		
@@ -226,6 +245,9 @@ public class GrammarRuleBuilder {
 		}
 	}
 	
+	/**
+	 * Evaluate a concatenation
+	 */
 	private void evalConcat() throws Exception {
 		StateGraph<GrammarState> a, b;
 		
@@ -237,6 +259,9 @@ public class GrammarRuleBuilder {
 		operandStack.push(a);
 	}
 	
+	/**
+	 * Evaluate an alternative (OR)
+	 */
 	private void evalAlternative() {
 		if (nameStack.size() == 1) {
 			addRule(nameStack.peek(), operandStack.pop());
@@ -245,6 +270,9 @@ public class GrammarRuleBuilder {
 		}
 	}
 	
+	/**
+	 * Evaluate a zero-plus (*)
+	 */
 	private void evalZeroPlus() throws Exception {
 		
 		String subrulename = getNewName();
@@ -262,6 +290,9 @@ public class GrammarRuleBuilder {
 		
 	}
 	
+	/**
+	 * Evaluate an optional (?)
+	 */
 	private void evalOptional() throws Exception {
 		
 		String subrulename = getNewName();
@@ -275,6 +306,9 @@ public class GrammarRuleBuilder {
 		
 	}
 	
+	/**
+	 * Push a concat operation if appropriate 
+	 */
 	private void detectImplicitConcat(Token tokLeft, Token tokRight) throws Exception {
 		if (tokLeft == null || tokRight == null) return;
 		
@@ -285,6 +319,9 @@ public class GrammarRuleBuilder {
 		}
 	}
 	
+	/**
+	 * Returns whether the precedence of opLeft <= opRight 
+	 */
 	private static boolean precedence (char opLeft, char opRight) {
 		if(opLeft == opRight) return true;
 
@@ -308,14 +345,9 @@ public class GrammarRuleBuilder {
 		return true;
 	}
 	
-	private static Token getToken(GrammarTokenizer tokenizer) throws Exception {
-		Token tok = tokenizer.nextToken();
-		
-		if (tok == null) throw new Exception("Unexpected end of file!");
-		
-		return tok;
-	}
-	
+	/**
+	 * Returns the next token without actually popping it off
+	 */
 	private static Token peekToken(GrammarTokenizer tokenizer) throws Exception {
 		Token tok = tokenizer.nextToken();
 		

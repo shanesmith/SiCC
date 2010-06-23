@@ -64,7 +64,7 @@ public class ssCC {
 	 */
 	public static void main(String[] args) {
 		
-		try {
+		try {			
 			ssCC sscc = new ssCC(args);
 			
 			sscc.createClasses();
