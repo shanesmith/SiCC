@@ -1,20 +1,12 @@
 
 import java.util.Vector;
 
-@SuppressWarnings("serial")
 public class StateGraph<T> extends Vector<T> {
 	
+	private static final long serialVersionUID = 1L;
+
 	public StateGraph() { 
 		//do nothing 
-	}
-	
-	public StateGraph(StateGraph<? extends T> copy) { 
-		super(copy); 
-	}
-	
-	// Shallow copy
-	public StateGraph<T> copy() {
-		return new StateGraph<T>(this);
 	}
 	
 	public void addFirst(T s) { add(0, s); }

@@ -1,4 +1,7 @@
 
+/**
+ * Token class automatically created for GrammarTokenizer 
+ */
 class Token {	
   public int line=-1, type=0;
   public String name, value;

@@ -1,21 +1,33 @@
 
 import java.io.PrintWriter;
 
+
+/**
+ * Output the Parser class based on the passed grammar definition
+ */
 public class ParserClassCreator {
 
-	String prefix = "";
+	/**
+	 * A prefix to prepend to all class names
+	 */
+	private String prefix = "";
 	
-	GrammarDefinition grammardef;
+	/**
+	 * The grammar definition we base the parser on
+	 */
+	private GrammarDefinition grammardef;
 	
-	public ParserClassCreator(GrammarDefinition grammardef) { 
+	/**
+	 * Constructor.
+	 */
+	public ParserClassCreator(String prefix, GrammarDefinition grammardef) {
+		this.prefix = prefix;
 		this.grammardef = grammardef; 
 	}
 	
-	public ParserClassCreator(String prefix, GrammarDefinition grammardef) {
-		this(grammardef);
-		this.prefix = prefix;
-	}
-	
+	/**
+	 * Output the parser class to the passed writer
+	 */
 	public void output(PrintWriter out) {
 		
 		String classname = prefix + "Parser";
@@ -57,8 +69,9 @@ public class ParserClassCreator {
 		
 	}
 	
-	private String node(String name) { return "AST" + name + "Node"; }
-	
+	/**
+	 * Parser's main parse function
+	 */
 	private void outputParseFunction(PrintWriter out, String startRuleName) {
 		
 		String tokenname = prefix + "Token";
@@ -137,6 +150,9 @@ public class ParserClassCreator {
 		
 	}
 	
+	/**
+	 * Parser's makenode function, which return a node of the correct type based on rulename
+	 */
 	private void outputMakeNodeFunction(PrintWriter out) {
 		
 		out.println("  private ASTNode makenode(String rulename, String value, boolean multi_child, ASTNode parent) throws Exception {");
@@ -153,6 +169,9 @@ public class ParserClassCreator {
 		
 	}
 	
+	/**
+	 * Parser's table creator, based on the grammar definition's table  
+	 */
 	private void outputBuildTableFunction(PrintWriter out) {
 		
 		out.println("  private void buildTable() {");
@@ -191,6 +210,9 @@ public class ParserClassCreator {
 		
 	}
 	
+	/**
+	 * Parser's internal GrammarRule class used in the table
+	 */
 	private void outputGrammarRuleClass(PrintWriter out) {
 		
 		out.println("  private class GrammarRule {");
@@ -205,6 +227,9 @@ public class ParserClassCreator {
 		
 	}
 	
+	/**
+	 * Parser's internal GrammarState class, used in GrammarRule
+	 */
 	private void outputGrammarStateClass(PrintWriter out) {
 		
 		out.println("  private class GrammarState {");
@@ -215,5 +240,10 @@ public class ParserClassCreator {
 		out.println("  } // end GrammarState");
 		
 	}
+
+	/**
+	 * Returns a node class name based on the given name 
+	 */
+	private String node(String name) { return "AST" + name + "Node"; }
 	
 }

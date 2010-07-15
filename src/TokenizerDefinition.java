@@ -1,5 +1,6 @@
 import java.io.LineNumberReader;
 import java.io.Reader;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Hashtable;
 
@@ -28,7 +29,7 @@ public class TokenizerDefinition {
 	/**
 	 * Constructor.
 	 */
-	public TokenizerDefinition(Reader definitions) throws Exception {
+	public TokenizerDefinition(Reader definitions) throws TokenizerDefinitionException, IOException {
 		createTokenDFAs(new LineNumberReader(definitions));
 		constructMasterDFA();
 	}
@@ -36,7 +37,7 @@ public class TokenizerDefinition {
 	/**
 	 * Parse a Reader's input and builds TokenDFAs for each definition line
 	 */
-	private void createTokenDFAs(LineNumberReader definition) throws Exception {
+	private void createTokenDFAs(LineNumberReader definition) throws TokenizerDefinitionException, IOException {
 		
 		String line, name, regexp;
 		
@@ -48,7 +49,13 @@ public class TokenizerDefinition {
 			
 			line = line.trim();
 			
-			if (line.isEmpty() || line.startsWith("#")) continue;
+			// if there is a comment character and it isn't preceded by an escape character, remove the comment
+			if (line.indexOf('#') != -1 && ( line.indexOf('#') == 0 || line.charAt(line.indexOf('#')-1) != '\\' )) {
+				line = line.substring(0, line.indexOf('#'));
+			}
+			
+			// either commented or empty line 
+			if (line.isEmpty()) continue;
 			
 			internal = (line.startsWith(":"));
 			
@@ -56,19 +63,29 @@ public class TokenizerDefinition {
 			if (internal) line = line.substring(1);
 			
 			// make sure we have another colon separating name and regexp
-			if (line.indexOf(':') == -1) throw new TokenizerDefinitionException("Invalid token definition.", lineNumber);
+			if (line.indexOf(':') == -1) throw new TokenizerDefinitionException("Missing separator : after token name", lineNumber);
 			
 			name = line.substring(0, line.indexOf(':')).trim();
 			
-			if (name.isEmpty()) throw new TokenizerDefinitionException("Token name not defined.", lineNumber);
-			if (!name.matches("\\w+")) throw new TokenizerDefinitionException("Invalid token name \"" + name + "\"", lineNumber);
+			if (name.isEmpty()) throw new TokenizerDefinitionException("Token name not defined", lineNumber);
+			if (!name.matches("[a-zA-Z]\\w*")) throw new TokenizerDefinitionException("Invalid token name \"" + name + "\"", lineNumber);
 			
 			regexp = line.substring(line.indexOf(':')+1).trim();
 			
 			if (regexp.isEmpty()) throw new TokenizerDefinitionException("Regular expression not defined for token \"" + name + "\"", lineNumber);
 
-			// create the TokenDFA
-			TokenDFA tok = new TokenDFA(name, regexp, internal, this);
+			TokenDFA tok;
+
+			// create the TokenDFA and catch any exception
+			try {
+				tok = new TokenDFA(name, regexp, internal, this);
+			}
+			catch (TokenizerDefinitionException ex) {
+				throw new TokenizerDefinitionException(ex.getMessage(), lineNumber);
+			}
+			catch (Exception e) {
+				throw new TokenizerDefinitionException(e.toString(), lineNumber);
+			}
 			
 			// if the created TokenDFA's name already exists, add it to the existing one as an alternative
 			if (tokenDFAs.containsKey(name)) {
@@ -84,7 +101,7 @@ public class TokenizerDefinition {
 	/**
 	 * Join all TokenDFAs as alternatives to the master DFA
 	 */
-	private void constructMasterDFA() throws Exception {
+	private void constructMasterDFA() {
 		
 		// we are creating new states, start from scratch
 		TokenizerState.resetNextID();
@@ -132,6 +149,6 @@ public class TokenizerDefinition {
 	/**
 	 * Returns the master DFA
 	 */
-	public TokenDFA getMasterTokenDFA() throws Exception { return masterDFA; }
+	public TokenDFA getMasterTokenDFA() { return masterDFA; }
 	
 }

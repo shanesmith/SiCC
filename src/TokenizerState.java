@@ -2,71 +2,90 @@
 import java.util.ListIterator;
 import java.util.Vector;
 
+/**
+ * Base class for NFA and DFA state classes
+ */
 public abstract class TokenizerState {
 	
+	/**
+	 * Each state has a unique id, keep track of next id to use 
+	 */
 	protected static int nextID  = 0;
 	
-	protected int id;
-	
+	/**
+	 * Special characters to be used in transitions
+	 */
 	public static final Character wildcard = 3;
 	public static final Character neg = 4;
 	
-	/*
-	 * Whether or not this state is accepting, defaulted to false
+	/**
+	 * The state's id
+	 */
+	protected int id;
+	
+	/**
+	 * Whether this state is accepting
 	 */
 	protected boolean accepting = false;
 	
+	
 	private Vector<TokenDFA> owners = new Vector<TokenDFA>();
 	
-	/*
-	 * Simple constructor
+	/**
+	 * Constructor.
 	 */
 	public TokenizerState() {
 		id = nextID++;
 	}
 	
-	
-	public TokenizerState(TokenDFA owner) { 
-		this();
-		addOwner(owner);
-	}
-	
-	public TokenizerState(Vector<TokenDFA> owners) {
-		this();
-		addOwners(owners);
-	}
-	
-	public void addOwner(TokenDFA owner) { 
-		// owner with null name indicates master DFA
-		if (owner.name != null && !owner.isInternal() && !this.owners.contains(owner)) {
-			ListIterator<TokenDFA> it = this.owners.listIterator();
+	/**
+	 * Add the given TokenDFA as an owner of this state 
+	 */
+	public void addOwner(TokenDFA newowner) { 
+		// do not accept owners that have null names (master dfa), internal owners, or if we already have the owner
+		if (newowner.name != null && !newowner.isInternal() && !owners.contains(newowner)) {
+			
 			boolean inserted = false;
 			
+			ListIterator<TokenDFA> it = this.owners.listIterator();
+			
+			// iterate over owners and insert in order of position
 			while (it.hasNext()) {
-				if (owner.getPosition() < it.next().getPosition()) {
+				if (newowner.getPosition() < it.next().getPosition()) {
 					it.previous();
-					it.add(owner);
+					it.add(newowner);
 					inserted = true;
 					break;
 				}
 			}
 			
+			// hasn't been inserted, so just put it at the end
 			if (!inserted) {
-				this.owners.add(owner);
+				owners.add(newowner);
 			}
+			
 		}
 	}
 	
+	/**
+	 * Add all the given owners to this state
+	 */
 	public void addOwners(Vector<TokenDFA> owners) {
+		// use addOwner instead of owners.addAll because of special handling
 		for (TokenDFA o : owners) {
 			addOwner(o);
 		}
 	}
 	
 	public Vector<TokenDFA> getOwners() { return owners; }
+
+	/**
+	 * Reset the next id (ex: for new graph)
+	 */
+	protected static void resetNextID() { nextID = 0; }
 	
-	/*
-	 * Simple SET/GET below
+	/**
+	 * A bunch of getters and setters
 	 */
 	
 	public void setAccepting(boolean accept) { accepting = accept; }
@@ -74,10 +93,5 @@ public abstract class TokenizerState {
 	public boolean isAccepting() { return accepting; }
 	
 	public int getID() { return id; }
-	
-	protected static void resetNextID() { nextID = 0; }
-	
-	public abstract boolean hasTransitions();
-
 	
 }

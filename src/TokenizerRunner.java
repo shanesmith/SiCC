@@ -1,5 +1,7 @@
 
-// OUTDATED?
+/*
+ * PROBABLY BROKEN
+ */
 
 import java.io.LineNumberReader;
 import java.io.Reader;
@@ -53,7 +55,6 @@ public class TokenizerRunner {
 			}
 			
 			if (c == -1 && value.isEmpty()) {
-				// TODO proper token type
 				return new Token(0, "eof", null, line);
 			}
 			
@@ -65,14 +66,13 @@ public class TokenizerRunner {
 				if (tokdfa.name.equals(SKIP)) {
 					continue tokenLoop;
 				} else {
-					// TODO proper token type
 					return new Token(0, tokdfa.name, value, line);
 				}
 				
 			} else {
 				value += (char)c;
 				
-				throw new TokenizerException("No such token for string \"" + value + "\"");
+				throw new Exception("No such token for string \"" + value + "\"");
 			}
 		}
 	}
@@ -97,7 +97,7 @@ public class TokenizerRunner {
 		} else {
 			int charcode = input.read();
 			
-			if (isInvalidCharCode(charcode)) throw new TokenizerException("invalid character! (" + charcode + ")");
+			if (isInvalidCharCode(charcode)) throw new Exception("invalid character! (" + charcode + ")");
 			
 			return charcode;
 		}

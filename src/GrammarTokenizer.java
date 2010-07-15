@@ -4,7 +4,32 @@ import java.util.Vector;
 import java.util.Stack;
 import java.util.ListIterator;
 
-class GrammarTokenizer {
+/**
+ * Tokenizer used to read the grammar definition file, 
+ * created automatically with this project's tokenizer class creator
+ * with the following token definitions
+ * 
+ * 		eol: (\n | \r | \r\n)
+ * 
+ * 		skip: \# [^\n\r] :eol:
+ * 		skip: [\s\t]
+ * 		
+ * 		sep: ->
+ * 		
+ * 		op: [\* \? \|]
+ * 		
+ * 		lparen: \(
+ * 		rparen: \)
+ * 
+ * 		multi_child: \[>1\]
+ * 
+ * 		:alpha: [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_]
+ * 		:digit: [0123456789]
+ * 		id: :alpha: (:digit: | :alpha:)*
+ * 
+ * 
+ */
+public class GrammarTokenizer implements iTokenizer {
 
   public static final int ID_TOKEN = 1; // :alpha:(:digit:|:alpha:)*
   public static final int OP_TOKEN = 2; // [\*\?\|]
@@ -31,12 +56,17 @@ class GrammarTokenizer {
 
   private Stack<Integer> pushedChars = new Stack<Integer>();
 
-  public GrammarTokenizer(Reader reader) {
+  public GrammarTokenizer (Reader reader) {
     input = new LineNumberReader(reader);
     buildDFA();
   } // end constructor
 
-  public Token nextToken() throws Exception {
+  public void setTokenHistorySize(int size) { tokenHistorySize = size; }
+  public int getTokenHistorySize() { return tokenHistorySize; }
+
+  public int getLineNumber() { return input.getLineNumber() + 1; }
+  
+  public Token nextToken() throws TokenizerException {
     if (tokenHistoryIT.hasNext()) {
       return tokenHistoryIT.next();
     } else {
@@ -50,14 +80,14 @@ class GrammarTokenizer {
     }
   } // end nextToken
 
-  private Token _nextToken() throws Exception{
+  private Token _nextToken() throws TokenizerException {
     int c;
     String value;
     int curState;
-    int lineNumber = input.getLineNumber(); //get line number right away since reading might change it
 
   tokenLoop:
     while (true) {
+      int lineNumber = input.getLineNumber() + 1; // LineNumberReader starts at zero
       curState = 0;
       value = "";
 
@@ -71,27 +101,23 @@ class GrammarTokenizer {
         return createToken("eof", "", lineNumber);
       } else if (accepting.containsKey(curState)) {
         pushChar(c);
-        if (accepting.get(curState) == "skip") continue tokenLoop;
+        if (accepting.get(curState).equals("skip")) continue tokenLoop;
         return createToken(accepting.get(curState), value, lineNumber);
       } else {
         value += (char)c;
-        String error = "(" + lineNumber + ") No such token for char sequence: ";
-        for (char cc : value.toCharArray()) error += (int)cc + " (" + cc + "), ";
-        throw new Exception(error);
+        throw new NoSuchTokenException(value, lineNumber);
       }
     }
   } // end _nextToken
 
-  public void pushToken() throws Exception {
+  public void pushToken() throws TokenizerException {
     if (tokenHistoryIT.hasPrevious()) {
       tokenHistoryIT.previous();
     } else {
-      throw new Exception("Too many token pushbacks!");
+      throw new TokenizerException("Token push limit (" + tokenHistorySize + ") reached.");
     }
   } // end pushToken
 
-  public void setTokenHistorySize(int size) { tokenHistorySize = size; }
-  public int getTokenHistorySize() { return tokenHistorySize; }
   private int transition(Integer state, Character c) {
     Integer nextState = DFA.get(state).get(c);
 
@@ -110,21 +136,22 @@ class GrammarTokenizer {
     }
 
     return nextState;
-  } // end feed
+  } // end transition
 
   private void pushChar(Integer c) { pushedChars.push(c); }
 
-  private int getChar() throws Exception {
+  private int getChar() throws TokenizerException {
     if (!pushedChars.empty()) {
       return pushedChars.pop();
     } else {
-      int charcode = input.read();
-      if (isInvalidCharCode(charcode)) throw new Exception("invalid character! (" + charcode + ")");
-      return charcode;
+      try {
+    	return input.read();
+      }
+      catch (IOException ex) {
+    	  throw new TokenizerException(ex);
+      }
     }
   } //end getChar
-
-  public static boolean isInvalidCharCode(int c) { return c < -1 || (c > -1 && c < 10) || (c > 13 && c < 32) || c > 126; }
 
   private void buildDFA() {
     Hashtable<Character, Integer> trans;
@@ -503,7 +530,7 @@ class GrammarTokenizer {
     accepting.put(1, "id");
   } //end buildDFA()
 
-  private Token createToken(String name, String value, int lineNumber) throws Exception {
+  private Token createToken(String name, String value, int lineNumber) {
     if ( name.equals("id") ) return new Token(ID_TOKEN, name, value, lineNumber);
     if ( name.equals("op") ) return new Token(OP_TOKEN, name, value, lineNumber);
     if ( name.equals("eol") ) return new Token(EOL_TOKEN, name, value, lineNumber);
@@ -513,7 +540,7 @@ class GrammarTokenizer {
     if ( name.equals("lparen") ) return new Token(LPAREN_TOKEN, name, value, lineNumber);
     if ( name.equals("sep") ) return new Token(SEP_TOKEN, name, value, lineNumber);
     if ( name.equals("eof") ) return new Token(EOF_TOKEN, name, value, lineNumber);
-    throw new Exception("Unknown token name: " + name);
+    throw new RuntimeException("Cannot create token, unknown token name: " + name);
   }
 
 } // end Tokenizer

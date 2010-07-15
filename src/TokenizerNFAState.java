@@ -1,24 +1,27 @@
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.Vector;
 
-
+/**
+ * A state to be used in a NFA for a tokenizer.
+ * 
+ * Multiple transitions from one character as well as epsilon transitions are allowable 
+ */
 public class TokenizerNFAState extends TokenizerState {
 
-	/*
-	 * A multimap from Characters to States.
-	 * 
-	 * Since NFAs can have multiple transitions for a single input, a vector of states is held instead of a single state.
-	 * 
-	 * Also note that the null key denotes an epsilon transition (Hashtables do not allow null keys, but HashMaps do).
+	/**
+	 * A map from characters to states (null key denotes an epsilon transition)
 	 */
 	private HashMap<Character, Vector<TokenizerNFAState>> transitions = new HashMap<Character, Vector<TokenizerNFAState>>();
 	
+	/**
+	 * Constructor.
+	 */
 	public TokenizerNFAState() { super(); }
-	public TokenizerNFAState(Object o) { this(); }
 	
-	/*
-	 * Add a transition on a Character to a state
+	/**
+	 * Add a transition on a character to a state
 	 */
 	public void addTransition(Character c, TokenizerNFAState next) { 
 		if (!transitions.containsKey(c)) {
@@ -28,16 +31,9 @@ public class TokenizerNFAState extends TokenizerState {
 		transitions.get(c).add(next);
 	}
 	
-	public void removeTransition(Character c, TokenizerNFAState next) {
-		if (!transitions.containsKey(c)) return;
-		
-		transitions.get(c).remove(next);
-		
-		if (transitions.get(c).isEmpty()) {
-			transitions.remove(c);
-		}
-	}
-	
+	/**
+	 * Return attainable states on the given character
+	 */
 	public Vector<TokenizerNFAState> getTransitions(Character c) {
 		Vector<TokenizerNFAState> trans = new Vector<TokenizerNFAState>(); 
 		
@@ -45,10 +41,12 @@ public class TokenizerNFAState extends TokenizerState {
 			trans.addAll(transitions.get(c));
 		}
 		
+		// wildcard transitions may be taken if they exist 
 		if (transitions.containsKey(TokenizerState.wildcard)) {
 			trans.addAll(transitions.get(TokenizerState.wildcard));
 		}
 		
+		// if there were no valid transitions so far, use negative transitions
 		if (trans.isEmpty() && transitions.containsKey(TokenizerState.neg)) {
 			trans.addAll(transitions.get(TokenizerState.neg));
 		}
@@ -56,7 +54,9 @@ public class TokenizerNFAState extends TokenizerState {
 		return trans;
 	}
 	
-	
+	/**
+	 * Get states attainable on an epsilon transition 
+	 */
 	public Vector<TokenizerNFAState> getEpsilonTransitions() {
 		if (transitions.containsKey(null)) {
 			return transitions.get(null);
@@ -65,36 +65,47 @@ public class TokenizerNFAState extends TokenizerState {
 		}
 	}
 	
-	public Vector<Character> getTransitionCharacters() {
-		return new Vector<Character>(transitions.keySet());
+	/**
+	 * Returns all possible transition characters
+	 */
+	public Set<Character> getTransitionCharacters() {
+		return transitions.keySet();
 	}
 	
-	public boolean hasTransitions() { return !transitions.isEmpty(); }
-	
-	public void copyGraph(StateGraph<TokenizerNFAState> newgraph, Hashtable<TokenizerNFAState, TokenizerNFAState> copyTable, TokenDFA newowner) {
+	/**
+	 * Deep copy of this state and all connected states (by recursion) to the newgraph.
+	 * 
+	 * copytable keeps a relation between original and copied state, useful for resolving transitions 
+	 */
+	public void copyGraph(StateGraph<TokenizerNFAState> newgraph, Hashtable<TokenizerNFAState, TokenizerNFAState> copyTable) {
+		
+		// the copy of this state
 		TokenizerNFAState newstate = new TokenizerNFAState(); 
 		
-		copyTable.put(this, newstate);
-		
+		// add copy to the graph
 		newgraph.add(newstate);
 		
+		// add reference between original and copy
+		copyTable.put(this, newstate);
+		
+
+		// copy transitions of original state to copy state
 		for (Character c : transitions.keySet()) {
-			
 			for (TokenizerNFAState trans : transitions.get(c)) {
 				
 				if (!copyTable.containsKey(trans)) {
-					trans.copyGraph(newgraph, copyTable, newowner);
+					// the next state hasn't been copied, yet, so recurse
+					trans.copyGraph(newgraph, copyTable);
 				}
 				
 				newstate.addTransition(c, copyTable.get(trans));
 				
 			}
-			
 		}
 		
 	}
 	
-	/*
+	/**
 	 * String representation of a state and its transitions 
 	 */
 	public String toString() {

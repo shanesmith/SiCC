@@ -1,10 +1,9 @@
 
+import java.util.*;
+
 /**
  * TokenDFA represents a token definition with a DFA
  */
-
-import java.util.*;
-
 public class TokenDFA {
 
 	private static int nextPos = 1;
@@ -55,11 +54,9 @@ public class TokenDFA {
 	/**
 	 * Constructor. Simply takes a name and an NFA, and converts it to a DFA.
 	 */
-	public TokenDFA(String name, StateGraph<TokenizerNFAState> NFA) throws Exception {
+	public TokenDFA(String name, StateGraph<TokenizerNFAState> NFA) {
 		this.name = name;
 		this.NFA = NFA;
-		
-		if (NFA == null) throw new TokenizerException("Passed token NFA cannot be null!", this);
 		
 		convertToDFA();
 	}
@@ -67,21 +64,12 @@ public class TokenDFA {
 	/**
 	 * Constructor.
 	 */
-	public TokenDFA(String name, String regexp, boolean internal, TokenizerDefinition tokendef) throws Exception {
+	public TokenDFA(String name, String regexp, boolean internal, TokenizerDefinition tokendef) throws TokenizerDefinitionException {
 		
 		this.name = name;
-		this.regexp = regexp;
+		this.regexp = regexp.trim();
 		this.tokendef = tokendef;
 		this.internal = internal;
-		
-		if (regexp == null) throw new TokenizerException("Token regexp cannot be null!", this);
-		if (regexp.isEmpty()) throw new TokenizerException("Token regexp cannot be empty!", this);
-		if (tokendef == null) throw new TokenizerException("Passed tokenizer cannot be null!", this);
-		
-		// remove characters to ignore from the regexp
-		for (char c : ignoreList) {
-			this.regexp = this.regexp.replace(String.valueOf(c), "");
-		}
 		
 		// create the intermediate NFA
 		createNFA();
@@ -110,9 +98,9 @@ public class TokenDFA {
 	}
 	
 	/**
-	 * Adds the given NFA as an alternative.
+	 * Adds the given NFA as an alternative to the current DFA.
 	 */
-	public void alternNFA(StateGraph<TokenizerNFAState> alt) throws Exception {
+	public void alternNFA(StateGraph<TokenizerNFAState> alt) {
 		TokenizerNFAState start = new TokenizerNFAState();
 		TokenizerNFAState end = new TokenizerNFAState();
 		
@@ -132,19 +120,31 @@ public class TokenDFA {
 	/**
 	 * Create an intermediate NFA based on the regexp previously set.
 	 */
-	private void createNFA() throws Exception {
+	private void createNFA() throws TokenizerDefinitionException {
 		
 		char c;
 		
 		// defines whether we are currently reading in a character class
 		boolean charclass = false;
 		
+		//TODO use operandStack null marker instead? (same with GrammarRuleBuilder)
+		// used to detect empty sub-patterns
+		int operandStackSizeAtOpenSubPattern = 0;
+		
 		// iterate over the regexp's characters
 		for (int pos = 0; pos < regexp.length(); pos++) {
 			
 			c = regexp.charAt(pos);
 			
+			if (Utils.in_array(c, ignoreList)) {
+				continue;
+			}
+			
 			if (isOperator(c)) { // operator				
+				
+				if (charclass && c != '^' && c != ']'){
+					throw new TokenizerDefinitionException("Operator " + c + " needs escaping in character class");
+				}
 				
 				if (c == ':') { 
 					// embed token
@@ -153,7 +153,9 @@ public class TokenDFA {
 					
 					while ( true ) {
 						
-						if (pos == regexp.length() - 1) throw new TokenizerException("Could not find end ':' of embed token name.", this);
+						if (pos == regexp.length() - 1) {
+							throw new TokenizerDefinitionException("Could not find end ':' of embed token name");
+						}
 						
 						c = regexp.charAt(++pos);
 						
@@ -164,7 +166,9 @@ public class TokenDFA {
 					
 					TokenDFA embedToken = tokendef.getTokenDFA(embedTokenName);
 					
-					if (embedToken == null) throw new TokenizerException("Cannot find token \"" + embedTokenName + "\" for embedding!", this);
+					if (embedToken == null) {
+						throw new TokenizerDefinitionException("Cannot find token \"" + embedTokenName + "\" for embedding");
+					}
 					
 					// push a _copy_ of the token's graph
 					pushOperand(copyGraph(embedToken.NFA));
@@ -172,9 +176,15 @@ public class TokenDFA {
 				else if (c == ')') {
 					// end of a sub-pattern, evaluate inside
 
+					if (operandStack.size() == operandStackSizeAtOpenSubPattern) {
+						throw new TokenizerDefinitionException("Empty subpattern");
+					}
+					
 					while ( true ) {
 						
-						if (operatorStack.empty()) throw new TokenizerException("Could not find beggining (", this);
+						if (operatorStack.empty()) {
+							throw new TokenizerDefinitionException("Could not find beggining subpattern (");
+						}
 						
 						if (operatorStack.peek() == '(') {
 							operatorStack.pop();
@@ -185,7 +195,17 @@ public class TokenDFA {
 					}
 					
 				}
-				else if (c == ']') {					
+				else if (c == ']') {		
+					// end of a character class
+					
+					if (!charclass) {
+						throw new TokenizerDefinitionException("Character class has not been opened with [");
+					}
+					
+					if (operandStack.peek().firstElement().getTransitionCharacters().isEmpty()) {
+						throw new TokenizerDefinitionException("Character classes cannot be empty");
+					}
+					
 					charclass = false;
 					
 					if (!operatorStack.isEmpty() && operatorStack.peek() == '^') {
@@ -193,6 +213,8 @@ public class TokenDFA {
 					}
 				}
 				else if (c == '[') {
+					// beginning of a character class
+					
 					charclass = true;
 					
 					TokenizerNFAState first = new TokenizerNFAState();
@@ -205,12 +227,31 @@ public class TokenDFA {
 					
 					operandStack.push(charclassGraph);					
 				}
-				else if (c == '(' || c == '^') {
+				else if (c == '^') {
+					// character class negation
+					
+					// operator only valid in a character class
+					if (!charclass) {
+						throw new TokenizerDefinitionException("Operator ^ must be in a character class");
+					}
+						
+					// operator needs to be defined before any literals in the character class 
+					if (!operandStack.peek().firstElement().getTransitionCharacters().isEmpty()) {
+						throw new TokenizerDefinitionException("Character class negation operator ^ needs to be first after opening [, or escaped if literal");
+					}
+					
 					// push without evaluating
 					pushOperator(c, false);
 				}
+				else if (c == '(') {
+					// beginning of a sub-pattern
+					
+					// push without evaluating
+					pushOperator(c, false);
+					operandStackSizeAtOpenSubPattern = operandStack.size();
+				}
 				else {
-					// default to simple push
+					// default to push (and possible evaluate)
 					pushOperator(c);
 				}
 				
@@ -220,7 +261,9 @@ public class TokenDFA {
 				if (c == '\\') {
 					// escaped character
 					
-					if (pos == regexp.length()-1) throw new TokenizerException("Nothing following the escape character!", this);
+					if (pos == regexp.length()-1) {
+						throw new TokenizerDefinitionException("Nothing following the escape character");
+					}
 					
 					c = regexp.charAt(++pos);
 					
@@ -230,7 +273,7 @@ public class TokenDFA {
 						case 'r': c = '\r'; break;
 						case 't': c = '\t'; break;
 						case '.': case '\\': break;
-						default: if (!isOperator(c)) throw new TokenizerException("Invalid escaping of character " + c, this);
+						default: if (!isOperator(c)) throw new TokenizerDefinitionException("Invalid escaping of character " + c);
 					}
 					
 				}
@@ -247,29 +290,38 @@ public class TokenDFA {
 				
 			}
 			
+			// detect and push implicit concat operator
+			// when not in a character class or at the end of the regex
 			if (!charclass && pos != regexp.length()-1) {
-				// detect and push implicit concat operator
 				detectImplicitConcat(regexp, pos);
 			}
 			
 		}
+
+		// ended the regex, but still in a character class...
+		if (charclass) {
+			throw new TokenizerDefinitionException("Character class has not been ended with a ]");
+		}
 		
-		// done reading in regexp, finish evaluating operators
+		// finish evaluating operators
 		while (!operatorStack.empty()) {
 			c = operatorStack.peek();
 			
-			if (c == '(') throw new TokenizerException("Could not find end subpattern ')'", this);
-			if (c == '[') throw new TokenizerException("Could not find end character class ']", this);
+			if (c == '(') throw new TokenizerDefinitionException("Could not find end subpattern )");
 			
 			evaluate();
 		}
 		
-		if (operandStack.empty()) throw new TokenizerException("Empty NFA stack", this);
+		if (operandStack.empty()) {
+			throw new RuntimeException("Empty NFA stack");
+		}
 		
 		// NFA is at the top of the operand
 		NFA = operandStack.pop();
 		
-		if (NFA.isEmpty()) throw new TokenizerException("Empty NFA", this);
+		if (NFA.isEmpty()) {
+			throw new RuntimeException("Empty NFA");
+		}
 		
 		// last state of NFA is accepting
 		NFA.lastElement().setAccepting(true);
@@ -278,10 +330,12 @@ public class TokenDFA {
 	/**
 	 * Convert the intermediate NFA to a DFA 
 	 */
-	private void convertToDFA() throws Exception {
+	private void convertToDFA() {
 		
 		// make sure we have an NFA
-		if (NFA == null) throw new TokenizerException("Empty NFA, cannot convert to DFA", this);
+		if (NFA == null) {
+			throw new RuntimeException("Empty NFA, cannot convert to DFA");
+		}
 		
 		// reset auto state id
 		TokenizerState.resetNextID();
@@ -356,9 +410,9 @@ public class TokenDFA {
 		StateGraph<TokenizerNFAState> newgraph = new StateGraph<TokenizerNFAState>();
 		Hashtable<TokenizerNFAState, TokenizerNFAState> copytable = new Hashtable<TokenizerNFAState, TokenizerNFAState>();
 		
-		graph.start().copyGraph(newgraph, copytable, this);
+		graph.start().copyGraph(newgraph, copytable);
 		
-		// move to end.......
+		// last state in original graph might not be last in new graph, so move it to the end
 		newgraph.add( newgraph.remove( newgraph.indexOf( copytable.get(graph.lastElement()) ) ) );
 		
 		return newgraph;
@@ -428,15 +482,19 @@ public class TokenDFA {
 	/**
 	 * Test for an implicit concat between pos and pos+1 of the string and push the concat operator to the operatorStack if true
 	 */
-	private void detectImplicitConcat (String str, int pos) throws Exception {
+	private void detectImplicitConcat (String str, int pos) throws TokenizerDefinitionException {
 		
 		// operator characters for which a concat is possible
 		char[] leftChars = { ')', ']', '*', '?', '+', '.', ':', '#' };
 		char[] rightChars = { '(', '[', '.', ':', '#' };
 		
-		// left and right characters to test
+		// left character to test
 		char left = str.charAt(pos);
-		char right = str.charAt(pos+1);
+		
+		// right character to test (passing over characters to ignore)
+		int rightpos = pos;		
+		while (Utils.in_array(str.charAt(++rightpos), ignoreList));
+		char right = str.charAt(rightpos);
 		
 		// test for regular input character (possibly escaped operator)
 		boolean leftIsInput = !isOperator(left) || (pos!=0 && str.charAt(pos-1) == '\\');
@@ -456,8 +514,8 @@ public class TokenDFA {
 	/**
 	 * Push operator
 	 */
-	private void pushOperator(Character c) throws Exception { pushOperator(c, true); }
-	private void pushOperator(Character c, boolean eval) throws Exception {
+	private void pushOperator(Character c) throws TokenizerDefinitionException { pushOperator(c, true); }
+	private void pushOperator(Character c, boolean eval) throws TokenizerDefinitionException {
 		if (eval) {
 			// evaluate while there are operators and they have precedence over the one pushed
 			while (!operatorStack.empty() && precedence(c, operatorStack.peek().charValue())) {
@@ -477,8 +535,8 @@ public class TokenDFA {
 	private void pushOperand(StateGraph<TokenizerNFAState> sg) { operandStack.push(sg); }
 	private void pushOperand(Character c) {
 		
-		TokenizerNFAState s1 = new TokenizerNFAState(this);
-		TokenizerNFAState s2 = new TokenizerNFAState(this);
+		TokenizerNFAState s1 = new TokenizerNFAState();
+		TokenizerNFAState s2 = new TokenizerNFAState();
 		
 		s1.addTransition(c, s2);
 		
@@ -505,35 +563,30 @@ public class TokenDFA {
 	/**
 	 * Pop an operator from the stack and evaluate
 	 */
-	private void evaluate() throws Exception{
+	private void evaluate() throws TokenizerDefinitionException{
 		char op = operatorStack.pop().charValue();
 		
-		try {
-			switch (op) {
-				case opConcat:
-					evalConcat();
-					break;
-				case '|':
-					evalAlternative();
-					break;
-				case '*':
-					evalZeroPlus();
-					break;
-				case '+':
-					evalOnePlus();
-					break;
-				case '?':
-					evalOptional(); 
-					break;
-				case '^':
-					evalNegate();
-					break;
-				default:
-					throw new TokenizerException("Operator error on " + op, this);
-			}
-		}
-		catch (EmptyStackException e) {
-			throw new TokenizerException("Not enough operands for operation '" + op + "'", this);
+		switch (op) {
+			case opConcat:
+				evalConcat();
+				break;
+			case '|':
+				evalAlternative();
+				break;
+			case '*':
+				evalZeroPlus();
+				break;
+			case '+':
+				evalOnePlus();
+				break;
+			case '?':
+				evalOptional(); 
+				break;
+			case '^':
+				evalNegate();
+				break;
+			default:
+				throw new RuntimeException("Unrecognized operator " + op);
 		}
 	}
 	
@@ -542,10 +595,15 @@ public class TokenDFA {
 	 * 
 	 * The old "accepting" state is left alone to become a dead end.
 	 */
-	private void evalNegate() {		
+	private void evalNegate() throws TokenizerDefinitionException {
+		
+		if (operandStack.size() < 1) {
+			throw new TokenizerDefinitionException("Missing operand for NEGATE (^) operation");
+		}
+		
 		StateGraph<TokenizerNFAState> g = operandStack.pop();
 		
-		TokenizerNFAState newAcceptingState = new TokenizerNFAState(this);
+		TokenizerNFAState newAcceptingState = new TokenizerNFAState();
 		
 		g.firstElement().addTransition(TokenizerState.neg, newAcceptingState);
 		
@@ -557,7 +615,12 @@ public class TokenDFA {
 	/**
 	 * Evaluate a concat of operands
 	 */
-	private void evalConcat() {
+	private void evalConcat() throws TokenizerDefinitionException {
+		
+		if (operandStack.size() < 2) {
+			throw new TokenizerDefinitionException("Missing operand for CONCAT operation");
+		}
+		
 		StateGraph<TokenizerNFAState> a, b;
 		
 		b = operandStack.pop();
@@ -572,14 +635,19 @@ public class TokenDFA {
 	/**
 	 * Evaluate an alternative operation
 	 */
-	private void evalAlternative() {
+	private void evalAlternative() throws TokenizerDefinitionException{
+		
+		if (operandStack.size() < 2) {
+			throw new TokenizerDefinitionException("Missing operand for ALTERN (|) operation");
+		}
+		
 		StateGraph<TokenizerNFAState> a, b;
 		
 		b = operandStack.pop();
 		a = operandStack.pop();
 		
-		TokenizerNFAState start = new TokenizerNFAState(this);
-		TokenizerNFAState end = new TokenizerNFAState(this);
+		TokenizerNFAState start = new TokenizerNFAState();
+		TokenizerNFAState end = new TokenizerNFAState();
 		
 		start.addTransition(null, a.firstElement());
 		start.addTransition(null, b.firstElement());
@@ -598,11 +666,16 @@ public class TokenDFA {
 	/**
 	 * Evaluate a zero-plus operation
 	 */
-	private void evalZeroPlus() {
+	private void evalZeroPlus() throws TokenizerDefinitionException {
+		
+		if (operandStack.size() < 1) {
+			throw new TokenizerDefinitionException("Missing operand for ZERO-PLUS (*) operation");
+		}
+		
 		StateGraph<TokenizerNFAState> g = operandStack.pop();
 		
-		TokenizerNFAState start = new TokenizerNFAState(this);
-		TokenizerNFAState end = new TokenizerNFAState(this);
+		TokenizerNFAState start = new TokenizerNFAState();
+		TokenizerNFAState end = new TokenizerNFAState();
 		
 		start.addTransition(null, end);
 		start.addTransition(null, g.firstElement());
@@ -619,11 +692,16 @@ public class TokenDFA {
 	/**
 	 * Evaluate a one-plus operation
 	 */
-	private void evalOnePlus() {
+	private void evalOnePlus() throws TokenizerDefinitionException  {
+		
+		if (operandStack.size() < 1) {
+			throw new TokenizerDefinitionException("Missing operand for ONE-PLUS (+) operation");
+		}
+		
 		StateGraph<TokenizerNFAState> g = operandStack.pop();
 		
-		TokenizerNFAState start = new TokenizerNFAState(this);
-		TokenizerNFAState end = new TokenizerNFAState(this);
+		TokenizerNFAState start = new TokenizerNFAState();
+		TokenizerNFAState end = new TokenizerNFAState();
 		
 		start.addTransition(null, g.firstElement());
 		
@@ -639,11 +717,16 @@ public class TokenDFA {
 	/**
 	 * Evaluate an optional operation
 	 */
-	private void evalOptional() {
+	private void evalOptional() throws TokenizerDefinitionException {
+		
+		if (operandStack.size() < 1) {
+			throw new TokenizerDefinitionException("Missing operand for OPTIONAL (?) operation");
+		}
+		
 		StateGraph<TokenizerNFAState> g = operandStack.pop();
 		
-		TokenizerNFAState start = new TokenizerNFAState(this);
-		TokenizerNFAState end = new TokenizerNFAState(this);
+		TokenizerNFAState start = new TokenizerNFAState();
+		TokenizerNFAState end = new TokenizerNFAState();
 		
 		start.addTransition(null, end);
 		start.addTransition(null, g.firstElement());
@@ -709,8 +792,11 @@ public class TokenDFA {
 	 * A bunch of getters.
 	 */
 	public boolean isInternal() { return internal; }
+	
 	public String getRegexp() { return regexp; }
+	
 	public TokenizerDFAState getStartState() { return DFA.start(); }
+	
 	public int getPosition() { return position; }
 
 	/**

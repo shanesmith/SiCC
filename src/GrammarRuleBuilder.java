@@ -1,4 +1,3 @@
-import java.util.EmptyStackException;
 import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
@@ -55,16 +54,22 @@ public class GrammarRuleBuilder {
 	/**
 	 * Constructor.
 	 */
-	public GrammarRuleBuilder (String name, GrammarTokenizer tokenizer, GrammarDefinition grammardef, boolean first) throws Exception {
+	public GrammarRuleBuilder (String name, GrammarTokenizer tokenizer, GrammarDefinition grammardef, boolean first) throws GrammarDefinitionException, TokenizerException {
 		this.name = name;
 		this.grammardef = grammardef;
-		parse(tokenizer, first);
+		
+		try {
+			parse(tokenizer, first);
+		}
+		catch (GrammarDefinitionException ex) {
+			throw new GrammarDefinitionException(ex.getMessage(), tokenizer.getLineNumber());
+		}
 	}
 	
 	/**
 	 * Parse definition using the given tokenizer (assumed to be positioned at the beginning of the RHS).  
 	 */
-	private void parse(GrammarTokenizer tokenizer, boolean first) throws Exception {
+	private void parse(GrammarTokenizer tokenizer, boolean first) throws GrammarDefinitionException, TokenizerException {
 		
 		Token tok;
 		
@@ -77,6 +82,7 @@ public class GrammarRuleBuilder {
 			tok = tokenizer.nextToken();
 			
 			switch(tok.type) {
+				case GrammarTokenizer.EOF_TOKEN: 
 				case GrammarTokenizer.EOL_TOKEN:
 					break tokenloop;
 			
@@ -92,7 +98,9 @@ public class GrammarRuleBuilder {
 				case GrammarTokenizer.RPAREN_TOKEN:
 					while ( true ) {
 						
-						if (operatorStack.empty()) throw new Exception("Could not find beggining (");
+						if (operatorStack.empty()) {
+							throw new GrammarDefinitionException("Unbalanced sub-expression, could not find beggining (");
+						}
 						
 						if (operatorStack.peek() == '(') {
 							operatorStack.pop();
@@ -116,12 +124,13 @@ public class GrammarRuleBuilder {
 				case GrammarTokenizer.MULTI_CHILD_TOKEN:
 					multi_child = true;
 					
-					if (tokenizer.nextToken().type != GrammarTokenizer.EOL_TOKEN) throw new Exception("Expected eol after multi child token!");
+					if (tokenizer.nextToken().type != GrammarTokenizer.EOL_TOKEN) {
+						throw new GrammarDefinitionException("Expected eol after multi child token");
+					}
 					
 					break tokenloop;
-					
 				default:
-					throw new Exception("(" + tok.line + ") Invalid token type: " + tok.name);
+					throw new GrammarDefinitionException("Unexpected " + tok.name + " (" + tok.value + ")");
 			}
 			
 			// TODO remove peekToken?
@@ -138,7 +147,9 @@ public class GrammarRuleBuilder {
 		while (!operatorStack.empty()) {
 			char c = operatorStack.peek();
 			
-			if (c == '(') throw new Exception("Could not find end subpattern ')'");
+			if (c == '(') {
+				throw new GrammarDefinitionException("Unbalanced sub-expression, could not find end )");
+			}
 			
 			evaluate();
 		}
@@ -179,8 +190,8 @@ public class GrammarRuleBuilder {
 	/**
 	 * Push an operator onto the operator stack
 	 */
-	private void pushOperator(Character c) throws Exception { pushOperator(c, true); }
-	private void pushOperator(Character c, boolean eval) throws Exception {
+	private void pushOperator(Character c) throws GrammarDefinitionException { pushOperator(c, true); }
+	private void pushOperator(Character c, boolean eval) throws GrammarDefinitionException {
 		if (eval) {
 			// evaluate while there are operators and they have precedence over the one pushed
 			while (!operatorStack.empty() && precedence(c, operatorStack.peek().charValue())) {
@@ -219,37 +230,36 @@ public class GrammarRuleBuilder {
 	/**
 	 * Evaluate the operator on top of the operator stack
 	 */
-	private void evaluate() throws Exception{
+	private void evaluate() throws GrammarDefinitionException {
 		char op = operatorStack.pop().charValue();
 		
-		try {
-			switch (op) {
-				case opConcat:
-					evalConcat();
-					break;
-				case '|':
-					evalAlternative();
-					break;
-				case '*':
-					evalZeroPlus();
-					break;
-				case '?':
-					evalOptional(); 
-					break;
-				default:
-					throw new Exception("Operator error on " + op);
-			}
-		}
-		catch (EmptyStackException e) {
-			throw new Exception("Not enough operands for operation '" + op + "'");
+		switch (op) {
+			case opConcat:
+				evalConcat();
+				break;
+			case '|':
+				evalAlternative();
+				break;
+			case '*':
+				evalZeroPlus();
+				break;
+			case '?':
+				evalOptional(); 
+				break;
+			default:
+				throw new RuntimeException("Unrecognized operator: " + op);
 		}
 	}
 	
 	/**
 	 * Evaluate a concatenation
 	 */
-	private void evalConcat() throws Exception {
+	private void evalConcat() throws GrammarDefinitionException {
 		StateGraph<GrammarState> a, b;
+		
+		if (operandStack.size() < 2) {
+			throw new GrammarDefinitionException("Missing operand for CONCAT operation");
+		}
 		
 		b = operandStack.pop();
 		a = operandStack.pop();
@@ -262,7 +272,11 @@ public class GrammarRuleBuilder {
 	/**
 	 * Evaluate an alternative (OR)
 	 */
-	private void evalAlternative() {
+	private void evalAlternative() throws GrammarDefinitionException {
+		if (operandStack.size() < 1) {
+			throw new GrammarDefinitionException("Missing operand for ALTERN (|) operation");
+		}
+		
 		if (nameStack.size() == 1) {
 			addRule(nameStack.peek(), operandStack.pop());
 		} else {
@@ -273,7 +287,11 @@ public class GrammarRuleBuilder {
 	/**
 	 * Evaluate a zero-plus (*)
 	 */
-	private void evalZeroPlus() throws Exception {
+	private void evalZeroPlus() throws GrammarDefinitionException {
+		
+		if (operandStack.size() < 1) {
+			throw new GrammarDefinitionException("Missing operand for ZERO-PLUS (*) operation");
+		}
 		
 		String subrulename = getNewName();
 		
@@ -293,7 +311,11 @@ public class GrammarRuleBuilder {
 	/**
 	 * Evaluate an optional (?)
 	 */
-	private void evalOptional() throws Exception {
+	private void evalOptional() throws GrammarDefinitionException {
+		
+		if (operandStack.size() < 1) {
+			throw new GrammarDefinitionException("Missing operant for ZERO-PLUS (*) operation");
+		}
 		
 		String subrulename = getNewName();
 		
@@ -309,7 +331,7 @@ public class GrammarRuleBuilder {
 	/**
 	 * Push a concat operation if appropriate 
 	 */
-	private void detectImplicitConcat(Token tokLeft, Token tokRight) throws Exception {
+	private void detectImplicitConcat(Token tokLeft, Token tokRight) throws GrammarDefinitionException {
 		if (tokLeft == null || tokRight == null) return;
 		
 		if (tokLeft.type == GrammarTokenizer.ID_TOKEN || tokLeft.type == GrammarTokenizer.RPAREN_TOKEN || (tokLeft.type == GrammarTokenizer.OP_TOKEN && !tokLeft.value.equals("|"))) {
@@ -348,7 +370,7 @@ public class GrammarRuleBuilder {
 	/**
 	 * Returns the next token without actually popping it off
 	 */
-	private static Token peekToken(GrammarTokenizer tokenizer) throws Exception {
+	private static Token peekToken(GrammarTokenizer tokenizer) throws TokenizerException {
 		Token tok = tokenizer.nextToken();
 		
 		tokenizer.pushToken();

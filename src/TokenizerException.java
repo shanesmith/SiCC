@@ -1,24 +1,9 @@
-
-@SuppressWarnings("serial")
 public class TokenizerException extends Exception {
-
-	private TokenDFA tokendfa;
-	
-	public TokenizerException(String message) {
-		super(message);
-	}
-	
-	public TokenizerException(String message, TokenDFA tokendfa) {
-		super(message);
-		this.tokendfa = tokendfa; 
-	}
-	
-	public TokenDFA getTokenDFA() {
-		return tokendfa;
-	}
-	
-	public String toString() {
-		return (tokendfa!=null ? "[" + tokendfa.name + "] " : "") + getMessage(); 
-	}
-
-}
+  private static final long serialVersionUID = 1L;
+  private int lineNumber = -1;
+  public TokenizerException (Throwable cause) { super(cause); }
+  public TokenizerException (String msg) { super(msg); }
+  public TokenizerException (String msg, int lineNumber) { super(msg); this.lineNumber = lineNumber; }
+  public int getLineNumber() { return lineNumber; }
+  public String toString() { return (lineNumber != -1 ? "[line " + lineNumber + "]" : "") + getMessage(); }
+} // end TokenizerException

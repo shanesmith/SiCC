@@ -30,7 +30,7 @@ public class GrammarDefinition {
 	/**
 	 * Parse the given grammar definition input, creating rules, and build the table. 
 	 */
-	public GrammarDefinition(Reader definitions) throws Exception {
+	public GrammarDefinition(Reader definitions) throws GrammarDefinitionException, TokenizerException {
 		parse(new GrammarTokenizer(definitions));
 		
 		buildParseTable();
@@ -48,11 +48,15 @@ public class GrammarDefinition {
 	/**
 	 * Returns the result of the table lookup of (rulename, tokenname)  
 	 */
-	public GrammarRule getProduction(String rulename, String tokenname) throws Exception { 
+	public GrammarRule getProduction(String rulename, String tokenname) { 
 		
-		if (!table.containsKey(rulename)) throw new Exception("Invalid rule name: " + rulename);
+		if (!table.containsKey(rulename)) {
+			throw new RuntimeException("Invalid rule name: " + rulename);
+		}
 		
-		if (!table.get(rulename).containsKey(tokenname)) throw new Exception("Invalid token \"" + tokenname + "\" for rule \"" + rulename + "\"");
+		if (!table.get(rulename).containsKey(tokenname)) {
+			throw new RuntimeException("Invalid token \"" + tokenname + "\" for rule \"" + rulename + "\"");
+		}
 		
 		return table.get(rulename).get(tokenname); 
 	}
@@ -60,10 +64,15 @@ public class GrammarDefinition {
 	/**
 	 * Add a production to the table at location (rulename, tokenname) 
 	 */
-	private void addToTable(String rulename, String tokenname, GrammarRule rule) throws Exception {
-		if (!table.containsKey(rulename)) table.put(rulename, new HashMap<String, GrammarRule>());
+	private void addToTable(String rulename, String tokenname, GrammarRule rule) {
 		
-		if (table.get(rulename).containsKey(tokenname)) throw new Exception("Terminal \"" + tokenname + "\" already exists for rule \"" + rulename + "\"");
+		if (!table.containsKey(rulename)) {
+			table.put(rulename, new HashMap<String, GrammarRule>());
+		}
+		
+		if (table.get(rulename).containsKey(tokenname)) {
+			throw new RuntimeException("Terminal \"" + tokenname + "\" already exists for rule \"" + rulename + "\"");
+		}
 		
 		table.get(rulename).put(tokenname, rule);
 	}
@@ -71,46 +80,79 @@ public class GrammarDefinition {
 	/**
 	 * Parse definitions into a set of rules 
 	 */
-	private void parse(GrammarTokenizer tokenizer) throws Exception {
+	private void parse(GrammarTokenizer tokenizer) throws TokenizerException, GrammarDefinitionException {
 		
-		// iterate through rule definitions and fill up the set
 		while ( true ) {
 			
-			Token firsttok = tokenizer.nextToken();
+			String rulename;
 			
-			if (firsttok.type == GrammarTokenizer.EOF_TOKEN) {
-				// we reached the end of the file, stop reading
-				break;
-			} else if (firsttok.type == GrammarTokenizer.EOL_TOKEN) {
-				// empty line
-				continue;
-			} else if (firsttok.type != GrammarTokenizer.ID_TOKEN) {
-				// if not EOF or EOL, the first token must be an ID which defines the name of the rule
-				throw new Exception("Rule must start with a valid ID");
+			int lineNumber;
+			
+			Token tok;
+
+			// Rule name
+			try {
+				tok = tokenizer.nextToken();
+			}
+			catch (NoSuchTokenException ex) {
+				throw new GrammarDefinitionException("Rule does not begin with a valid ID", ex, ex.getLineNumber());
 			}
 			
-			// the token following the name must be the separator
-			if (tokenizer.nextToken().type != GrammarTokenizer.SEP_TOKEN) throw new Exception("Rule seperator -> not found after rule name");
+			if (tok.type == GrammarTokenizer.EOF_TOKEN) {
+				break; // we reached the end of the file, stop reading
+			} 
+			else if (tok.type == GrammarTokenizer.EOL_TOKEN) {
+				continue; // empty line
+			} 
+			else if (tok.type != GrammarTokenizer.ID_TOKEN) {
+				throw new GrammarDefinitionException("Rule does not begin with a valid ID", tok.line);
+			}
+			else {
+				rulename = tok.value;
+				lineNumber = tok.line;
+			}
 			
-			// build the rules
-			GrammarRuleBuilder rulebuilder = new GrammarRuleBuilder(firsttok.value, tokenizer, this, startRuleName == null);
 			
-			// add the rules returned by the rule builder to the set of all rules
-			for (String rulename : rulebuilder.getRules().keySet()) {
-				if (!rules.containsKey(rulename)) rules.put(rulename, new Vector<GrammarRule>());
+			// Separator ->
+			try {
+				tok = tokenizer.nextToken();
+			}
+			catch (NoSuchTokenException ex) {
+				throw new GrammarDefinitionException("No such token for: " + ex.getValue(), ex, ex.getLineNumber());
+			}
+			
+			if (tok.type != GrammarTokenizer.SEP_TOKEN) {
+				throw new GrammarDefinitionException("Rule seperator -> not found after rule name", tok.line);
+			}
+			
+			
+			// Build the rules
+			GrammarRuleBuilder rulebuilder;
+			
+			try {
+				rulebuilder = new GrammarRuleBuilder(rulename, tokenizer, this, startRuleName == null);
+			}
+			catch (GrammarDefinitionException ex) {
+				// re-throw with a line number
+				throw new GrammarDefinitionException(ex.getMessage(), lineNumber);
+			}
+			
+			// Add the rules returned by the rule builder to the set of all rules
+			for (String name : rulebuilder.getRules().keySet()) {
+				if (!rules.containsKey(name)) rules.put(name, new Vector<GrammarRule>());
 				
-				rules.get(rulename).addAll(rulebuilder.getRules(rulename));
+				rules.get(name).addAll(rulebuilder.getRules(name));
 			}
 			
+			// If startRuleName is null then this rule is the first defined, and therefore the start rule
 			if (startRuleName == null) {
-				// if startRuleName is null then this rule is the first defined, and therefore the start rule
-				startRuleName = rulebuilder.getName();
+				startRuleName = rulename;
 			}
 			
 		}
 		
-		// iterate through each state of each rule, marking the state as being a rule or token state
-		// by checking whether the name of the state has been defined as a rule
+		// Iterate through each state of each rule, marking the state as being a token or rule state
+		// by comparing the state's name with the names of defined rules
 		for (Vector<GrammarRule> altrules : rules.values()) {
 			
 			for (GrammarRule rule : altrules) {
@@ -134,10 +176,9 @@ public class GrammarDefinition {
 	/**
 	 * Build the parse table by using FIRST and FOLLOW
 	 */
-	private void buildParseTable() throws Exception {
+	private void buildParseTable() {
 		
 		for (Vector<GrammarRule> altrules : rules.values()) {
-			
 			for (GrammarRule rule : altrules) {
 				
 				for (String terminal : rule.first()) {
@@ -158,7 +199,6 @@ public class GrammarDefinition {
 				}
 				
 			}
-			
 		}
 		
 	}
@@ -166,7 +206,7 @@ public class GrammarDefinition {
 	/**
 	 * Return the set of terminals that can be found as the first terminal of the given rule 
 	 */
-	public HashSet<String> first(String rulename) throws Exception {
+	public HashSet<String> first(String rulename) {
 		HashSet<String> first = new HashSet<String>();
 		
 		for (GrammarRule r : rules.get(rulename)) {
@@ -179,7 +219,7 @@ public class GrammarDefinition {
 	/**
 	 * Returns the set of terminals that can be found immediately following the given rule 
 	 */
-	public HashSet<String> follow(String rulename) throws Exception {
+	public HashSet<String> follow(String rulename) {
 		HashSet<String> follow = new HashSet<String>();
 		
 		for (Vector<GrammarRule> v : rules.values()) {
@@ -187,6 +227,7 @@ public class GrammarDefinition {
 				follow.addAll(r.getFollowOf(rulename));
 			}
 		}
+		
 		
 		if (follow.isEmpty()) follow.add(null);
 		

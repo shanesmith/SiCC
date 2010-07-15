@@ -1,23 +1,38 @@
+
 import java.io.PrintWriter;
+import java.io.IOException;
 import java.util.Hashtable;
 
-
+/**
+ * Output the Tokenizer class based on the passed token definitions
+ *
+ */
 public class TokenizerClassCreator {
 
-	String prefix = "";
-	TokenizerDefinition tokendef;
+	/**
+	 * A prefix to prepend to all class names
+	 */
+	private String prefix = "";
 	
-	public TokenizerClassCreator (TokenizerDefinition tokendef) {
+	/**
+	 * The token definition we base the tokenizer on
+	 */
+	private TokenizerDefinition tokendef;
+
+	/**
+	 * Constructor.
+	 */
+	public TokenizerClassCreator (String prefix, TokenizerDefinition tokendef) {
+		this.prefix = prefix;
 		this.tokendef = tokendef;
 	}
 	
-	public TokenizerClassCreator (String prefix, TokenizerDefinition tokendef) {
-		this(tokendef);
-		this.prefix = prefix;
-	}
-	
-	public void output(PrintWriter out) throws Exception {		
+	/**
+	 * Output the tokenizer class to the provided writer
+	 */
+	public void output(PrintWriter out) throws IOException {		
 		String classname = prefix + "Tokenizer";
+		String interfacename = prefix + "iTokenizer";
 		String tokclass = prefix + "Token";
 		
 		Hashtable<Integer, String> accepting = new Hashtable<Integer, String>();
@@ -29,7 +44,7 @@ public class TokenizerClassCreator {
 		out.println("import java.util.ListIterator;");
 		out.println();
 		
-		out.println("public class " + classname + " {");
+		out.println("public class " + classname + " implements " + interfacename + " {");
 		out.println();
 		
 		int i = 1;
@@ -68,7 +83,14 @@ public class TokenizerClassCreator {
 		out.println("  } // end constructor");
 		out.println();
 		
-		out.println("  public " + tokclass + " nextToken() throws Exception {");
+		out.println("  public void setTokenHistorySize(int size) { tokenHistorySize = size; }");
+		out.println("  public int getTokenHistorySize() { return tokenHistorySize; }");
+		out.println();
+		
+		out.println("  public int getLineNumber() { return input.getLineNumber() + 1; }");
+		out.println();
+		
+		out.println("  public " + tokclass + " nextToken() throws TokenizerException {");
 		out.println("    if (tokenHistoryIT.hasNext()) {");
 		out.println("      return tokenHistoryIT.next();");
 		out.println("    } else {");
@@ -83,14 +105,14 @@ public class TokenizerClassCreator {
 		out.println("  } // end nextToken");
 		out.println();
 		
-		out.println("  private " + tokclass + " _nextToken() throws Exception{");
+		out.println("  private " + tokclass + " _nextToken() throws TokenizerException {");
 		out.println("    int c;");
 		out.println("    String value;");
 		out.println("    int curState;");
-		out.println("    int lineNumber = input.getLineNumber(); //get line number right away since reading might change it");
 		out.println();
 		out.println("  tokenLoop:");
 		out.println("    while (true) {");
+		out.println("      int lineNumber = input.getLineNumber() + 1; // LineNumberReader starts at zero");
 		out.println("      curState = 0;");
 		out.println("      value = \"\";");
 		out.println();
@@ -104,29 +126,24 @@ public class TokenizerClassCreator {
 		out.println("        return createToken(\"eof\", \"\", lineNumber);");
 		out.println("      } else if (accepting.containsKey(curState)) {");
 		out.println("        pushChar(c);");
-		out.println("        if (accepting.get(curState) == \"skip\") continue tokenLoop;");
+		out.println("        if (accepting.get(curState).equals(\"skip\")) continue tokenLoop;");
 		out.println("        return createToken(accepting.get(curState), value, lineNumber);");
 		out.println("      } else {");
 		out.println("        value += (char)c;");
-		out.println("        String error = \"(\" + lineNumber + \") No such token for char sequence: \";");
-		out.println("        for (char cc : value.toCharArray()) error += (int)cc + \" (\" + cc + \"), \";");
-		out.println("        throw new Exception(error);");
+		out.println("        throw new NoSuchTokenException(value, lineNumber);");
 		out.println("      }");
 		out.println("    }");
 		out.println("  } // end _nextToken");
 		out.println();
 		
-		out.println("  public void pushToken() throws Exception {");
+		out.println("  public void pushToken() throws TokenizerException {");
 		out.println("    if (tokenHistoryIT.hasPrevious()) {");
 		out.println("      tokenHistoryIT.previous();");
 		out.println("    } else {");
-		out.println("      throw new Exception(\"Too many token pushbacks!\");");
+		out.println("      throw new TokenizerException(\"Token push limit (\" + tokenHistorySize + \") reached.\");");
 		out.println("    }");
 		out.println("  } // end pushToken");
 		out.println();
-		
-		out.println("  public void setTokenHistorySize(int size) { tokenHistorySize = size; }");
-		out.println("  public int getTokenHistorySize() { return tokenHistorySize; }");
 		
 		out.println("  private int transition(Integer state, Character c) {");
 		out.println("    Integer nextState = DFA.get(state).get(c);");
@@ -146,24 +163,24 @@ public class TokenizerClassCreator {
 		out.println("    }");
 		out.println();
 		out.println("    return nextState;");
-		out.println("  } // end feed");
+		out.println("  } // end transition");
 		out.println();
 		
 		out.println("  private void pushChar(Integer c) { pushedChars.push(c); }");
 		out.println();
 		
-		out.println("  private int getChar() throws Exception {");
+		out.println("  private int getChar() throws TokenizerException {");
 		out.println("    if (!pushedChars.empty()) {");
 		out.println("      return pushedChars.pop();");
 		out.println("    } else {");
-		out.println("      int charcode = input.read();");
-		out.println("      if (isInvalidCharCode(charcode)) throw new Exception(\"invalid character! (\" + charcode + \")\");");
-		out.println("      return charcode;");
+		out.println("      try {");
+		out.println("        return input.read();");
+		out.println("      }");
+		out.println("      catch (IOException ex) {");
+		out.println("        throw new TokenizerException(ex);");
+		out.println("      }");
 		out.println("    }");
 		out.println("  } //end getChar");
-		out.println();
-		
-		out.println("  public static boolean isInvalidCharCode(int c) { return c < -1 || (c > -1 && c < 10) || (c > 13 && c < 32) || c > 126; }");
 		out.println();
 		
 		out.println("  private void buildDFA() {");
@@ -193,14 +210,14 @@ public class TokenizerClassCreator {
 		out.println("  } //end buildDFA()");
 		out.println();
 		
-		out.println("  private " + tokclass + " createToken(String name, String value, int lineNumber) throws Exception {");
+		out.println("  private " + tokclass + " createToken(String name, String value, int lineNumber) {");
 		for(TokenDFA tdfa : tokendef.getAllTokenDFA()) {
 			if (tdfa.isInternal()) continue;
 			
 			out.println("    if ( name.equals(\"" + tdfa.name + "\") ) return new " + tokclass + "(" + tdfa.name.toUpperCase() + "_TOKEN, name, value, lineNumber);");
 		}
 		out.println("    if ( name.equals(\"eof\") ) return new " + tokclass + "(EOF_TOKEN, name, value, lineNumber);");
-		out.println("    throw new Exception(\"Unknown token name: \" + name);");
+		out.println("    throw new RuntimeException(\"Cannot create token, unknown token name: \" + name);");
 		out.println("  }");
 		out.println();
 		

@@ -36,6 +36,8 @@ public class GrammarRule {
 	
 	/**
 	 * The rule's graph
+	 * 
+	 * null denotes an epsilon rule
 	 */
 	private StateGraph<GrammarState> graph;
 	
@@ -43,16 +45,6 @@ public class GrammarRule {
 	 * A reference back to the grammar definition
 	 */
 	private GrammarDefinition grammardef;
-
-	/**
-	 * A bunch of getters and setters
-	 */
-	public String getName() { return name; }
-	public boolean isMultiChild() { return multi_child; }
-	public void setMultiChild(boolean multi) { multi_child = multi; } 
-	public boolean isSubrule() { return subrule; }
-	public boolean hasGraph() { return graph != null; }
-	public StateGraph<GrammarState> getGraph() { return graph; }
 
 	/**
 	 * Constructor.
@@ -77,14 +69,15 @@ public class GrammarRule {
 	 *  in other words finds all terminals in this rule that can be found
 	 *  directly after the given rulename
 	 */
-	public HashSet<String> getFollowOf(String rulename) throws Exception {
+	public HashSet<String> getFollowOf(String rulename) {
 		HashSet<String> follow = new HashSet<String>();
 		
-		
+		// rule is epsilon, return empty set
 		if (graph == null) {
 			return follow;
 		}
 		
+		// iterate over this rule's graph, looking for a rule state called rulename
 		Iterator<GrammarState> it = graph.iterator();
 		
 		while(it.hasNext()) {
@@ -95,13 +88,13 @@ public class GrammarRule {
 				
 				Stack<GrammarState> process = new Stack<GrammarState>();
 				
-				GrammarState processState;
-				
+				// add the next state to the process stack
+				// or push null to identify the end of the graph
 				process.push(it.hasNext() ? it.next() : null);
 				
 				while (!process.isEmpty()) {
 				
-					processState = process.pop();
+					GrammarState processState = process.pop();
 					
 					if (processState == null) { 
 						if (!this.getName().equals(rulename)) {
@@ -109,11 +102,15 @@ public class GrammarRule {
 						}
 					}					
 					else if (processState.type == GrammarState.TOKEN) {
+						// next state is a token (terminal), simply add to the follow set
 						follow.add(processState.name);
 					}
 					else if (processState.type == GrammarState.RULE) {
+						// next state is a rule, add FIRST of the next state
 						HashSet<String> nextFirst = grammardef.first(processState.name);
 						
+						// if first of next state contains a null (epsilon) terminal
+						// then remove it and include FOLLOW of the next state
 						if (nextFirst.contains(null)) {
 							nextFirst.remove(null);
 							follow.addAll(grammardef.follow(processState.name));
@@ -131,39 +128,54 @@ public class GrammarRule {
 		return follow;
 	}
 	
-	public Vector<String> first() throws Exception {
+	/**
+	 * Return the results of FIRST on this rule 
+	 */
+	public Vector<String> first() {
 		
 		Vector<String> first = new Vector<String>();
 		
+		// if graph is null (epsilon)
+		// add the epsilon state and return
 		if (graph == null) {
 			first.add(null);
 			return first;
 		}
 		
-		Stack<GrammarState> process = new Stack<GrammarState>();
+		GrammarState firststate = graph.firstElement();
 		
-		process.push(graph.firstElement());
-		
-		while (!process.isEmpty()) {
-			
-			GrammarState state = process.pop();
-			
-			if (state.type == GrammarState.RULE) {
-				if (!grammardef.hasRule(state.name)) throw new Exception("Undefined rule: " + state.name);
-				
-				first.addAll( grammardef.first(state.name) );
-			} 
-			else if (state.type == GrammarState.TOKEN) {
-				first.add(state.name);
-			}
-			
+		if (firststate.type == GrammarState.RULE) {
+			// state is a rule, at FIRST of that rule
+			first.addAll( grammardef.first(firststate.name) );
+		}
+		else if (firststate.type == GrammarState.TOKEN) {
+			// state is a token (terminal), simply add to first
+			first.add(firststate.name);
 		}
 		
 		return first;
 		
 	}
 	
-	public String toString() { return " "+graph; } 
+	/**
+	 * A bunch of getters and setters
+	 */
+	public String getName() { return name; }
+	
+	public boolean isMultiChild() { return multi_child; }
+	
+	public void setMultiChild(boolean multi) { multi_child = multi; } 
+	
+	public boolean isSubrule() { return subrule; }
+	
+	public boolean hasGraph() { return graph != null; }
+	
+	public StateGraph<GrammarState> getGraph() { return graph; }
+	
+	/**
+	 * String representation of this rule
+	 */
+	public String toString() { return graph.toString(); } 
 	
 	
 }

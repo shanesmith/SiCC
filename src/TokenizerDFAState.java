@@ -2,23 +2,24 @@
 import java.util.Hashtable;
 import java.util.Vector;
 
+/**
+ * A state to be used in a DFA for a tokenizer.
+ * 
+ * Compared to NFA states, there cannot be multiple transitions from one character as well as any epsilon transitions 
+ */
 public class TokenizerDFAState extends TokenizerState {
 
-	/*
-	 * A multimap from Characters to States.
-	 * 
-	 * Since NFAs can have multiple transitions for a single input, a vector of states is held instead of a single state.
-	 * 
-	 * Also note that the null key denotes an epsilon transition (Hashtables do not allow null keys, but HashMaps do).
+	/**
+	 * A map of transitions from this state on a character
 	 */
 	private Hashtable<Character, TokenizerDFAState> transitions = new Hashtable<Character, TokenizerDFAState>();
 	
-	/*
+	/**
 	 * A DFA state is constructed from multiple NFA states when a conversion is done, this is where the NFA states are held.
 	 */
 	private Vector<TokenizerNFAState> NFAStates;
 	
-	/*
+	/**
 	 * Construct a DFA state based on a set of NFA states
 	 */
 	public TokenizerDFAState(Vector<TokenizerNFAState> NFAStates) {
@@ -36,20 +37,26 @@ public class TokenizerDFAState extends TokenizerState {
 		
 	}
 	
-	/*
-	 * Add a transition on a Character to a state
+	/**
+	 * Add a transition on a character to a state
 	 */
 	public void addTransition(Character c, TokenizerDFAState next) { 
 		transitions.put(c, next);
 	}
 	
-	public TokenizerDFAState doTransition(Character c) {
+	/**
+	 * Return the next state given a character, taking into
+	 * account possible wildcard or negative implications
+	 */
+	public TokenizerDFAState doTransition(char c) {
 		TokenizerDFAState trans = transitions.get(c);
 		
 		if (trans == null) {
+			// there were no transitions for c, let's try a wildcard
 			trans = transitions.get(TokenizerState.wildcard);
 			
 			if (trans == null) {
+				// no transition for c or a wildcard, let's try a negate
 				trans = transitions.get(TokenizerState.neg);
 			}
 		}
@@ -57,10 +64,17 @@ public class TokenizerDFAState extends TokenizerState {
 		return trans;
 	}
 	
+	/**
+	 * Returns whether or not we can make a transition on the given character,
+	 * including wildcard and negative transitions
+	 */
 	public boolean transitionExists(char c) {
 		return doTransition(c) != null;
 	}
 	
+	/**
+	 * Get the transitions of the NFA states on the given character
+	 */
 	public Vector<TokenizerNFAState> getNFATransitions(char c) {
 		Vector<TokenizerNFAState> trans = new Vector<TokenizerNFAState>();
 		
@@ -71,6 +85,9 @@ public class TokenizerDFAState extends TokenizerState {
 		return trans;
 	}
 	
+	/**
+	 * Get all the possible transition characters of the NFA states
+	 */
 	public Vector<Character> getNFATransitionCharacters() {		
 		Vector<Character> result = new Vector<Character>();
 		
@@ -87,15 +104,19 @@ public class TokenizerDFAState extends TokenizerState {
 		return result;
 	}
 	
+	/**
+	 * Get all the possible transition characters of this state
+	 */
 	public Vector<Character> getTransitionCharacters() {
 		return new Vector<Character>(transitions.keySet());
 	}
 	
+	/**
+	 * Return the NFA states
+	 */
 	public Vector<TokenizerNFAState> getNFAStates() { return NFAStates; }
 	
-	public boolean hasTransitions() { return !transitions.isEmpty(); }
-	
-	/*
+	/**
 	 * String representation of a state and its transitions 
 	 */
 	public String toString() {
