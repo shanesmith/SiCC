@@ -61,6 +61,9 @@ public class GrammarRuleBuilder {
 		try {
 			parse(tokenizer, first);
 		}
+		catch (NoSuchTokenException ex) {
+			throw new GrammarDefinitionException("Invalid: " + ex.getValue(), tokenizer.getLineNumber());
+		}
 		catch (GrammarDefinitionException ex) {
 			throw new GrammarDefinitionException(ex.getMessage(), tokenizer.getLineNumber());
 		}
@@ -93,9 +96,18 @@ public class GrammarRuleBuilder {
 				case GrammarTokenizer.LPAREN_TOKEN:
 					pushNewName();
 					pushOperator(tok.value.charAt(0), false);
+					operandStack.push(null); // mark it
 					break;
 					
 				case GrammarTokenizer.RPAREN_TOKEN:
+					if (operandStack.peek() == null) {
+						// empty subpattern
+						nameStack.pop();
+						operatorStack.pop();
+						operandStack.pop();
+						continue;
+					}
+					
 					while ( true ) {
 						
 						if (operatorStack.empty()) {
@@ -114,7 +126,10 @@ public class GrammarRuleBuilder {
 					
 					addSubrule(subrulename, operandStack.pop());
 					
+					operandStack.pop(); //pop off null marker
+					
 					pushOperand(new GrammarState(subrulename, GrammarState.RULE));
+					
 					break;
 					
 				case GrammarTokenizer.ID_TOKEN:
@@ -124,8 +139,10 @@ public class GrammarRuleBuilder {
 				case GrammarTokenizer.MULTI_CHILD_TOKEN:
 					multi_child = true;
 					
-					if (tokenizer.nextToken().type != GrammarTokenizer.EOL_TOKEN) {
-						throw new GrammarDefinitionException("Expected eol after multi child token");
+					tok = tokenizer.nextToken();
+					
+					if (tok.type != GrammarTokenizer.EOL_TOKEN && tok.type != GrammarTokenizer.EOF_TOKEN) {
+						throw new GrammarDefinitionException("Expected eol after multi-child token");
 					}
 					
 					break tokenloop;
@@ -138,6 +155,10 @@ public class GrammarRuleBuilder {
 			
 		}
 		
+		if (operandStack.isEmpty()) {
+			throw new GrammarDefinitionException("Empty rule definition");
+		}
+		
 		if (first) {
 			// implicit EOF token for the first rule of the grammar
 			pushOperator(opConcat);
@@ -145,9 +166,7 @@ public class GrammarRuleBuilder {
 		}
 		
 		while (!operatorStack.empty()) {
-			char c = operatorStack.peek();
-			
-			if (c == '(') {
+			if (operatorStack.peek() == '(') {
 				throw new GrammarDefinitionException("Unbalanced sub-expression, could not find end )");
 			}
 			
@@ -264,6 +283,10 @@ public class GrammarRuleBuilder {
 		b = operandStack.pop();
 		a = operandStack.pop();
 		
+		if (a == null || b == null) {
+			throw new GrammarDefinitionException("Missing operand for CONCAT operation");
+		}
+		
 		a.addAll(b);
 		
 		operandStack.push(a);
@@ -273,7 +296,7 @@ public class GrammarRuleBuilder {
 	 * Evaluate an alternative (OR)
 	 */
 	private void evalAlternative() throws GrammarDefinitionException {
-		if (operandStack.size() < 1) {
+		if (operandStack.size() < 2 || operandStack.peek() == null) {
 			throw new GrammarDefinitionException("Missing operand for ALTERN (|) operation");
 		}
 		
@@ -282,6 +305,10 @@ public class GrammarRuleBuilder {
 		} else {
 			addSubrule(nameStack.peek(), operandStack.pop());
 		}
+		
+		if (operandStack.peek() == null) {
+			throw new GrammarDefinitionException("Missing operand for ALTERN (|) operation");
+		}
 	}
 	
 	/**
@@ -289,7 +316,7 @@ public class GrammarRuleBuilder {
 	 */
 	private void evalZeroPlus() throws GrammarDefinitionException {
 		
-		if (operandStack.size() < 1) {
+		if (operandStack.size() < 1 || operandStack.peek() == null) {
 			throw new GrammarDefinitionException("Missing operand for ZERO-PLUS (*) operation");
 		}
 		
@@ -313,7 +340,7 @@ public class GrammarRuleBuilder {
 	 */
 	private void evalOptional() throws GrammarDefinitionException {
 		
-		if (operandStack.size() < 1) {
+		if (operandStack.size() < 1 || operandStack.peek() == null) {
 			throw new GrammarDefinitionException("Missing operant for ZERO-PLUS (*) operation");
 		}
 		

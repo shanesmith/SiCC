@@ -32,7 +32,7 @@ public class TokenizerDefinitionTest {
 		"name: def)",	// Could not find beggining subpattern (
 		"name: (def",	// Could not find end subpattern )
 		"name: ()",		// Empty subpattern
-		
+		"name: def(*)", // Empty subpattern
 		"name: def]",		// Character class has not been opened with [
 		"name: [def",		// Character class has not been ended with a ]
 		"name: ^def]",		// Operator ^ must be in a character class

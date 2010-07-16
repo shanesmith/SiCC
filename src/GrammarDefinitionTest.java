@@ -4,20 +4,34 @@ import java.io.StringReader;
 public class GrammarDefinitionTest {
 	
 	public static final String[] definitions = {
-		
-		"tok",			// Rule seperator -> not found after rule name
+	
+		/*"tok",			// Rule seperator -> not found after rule name
 		"-> tok",		// Rule does not begin with a valid ID
 		"9Rule -> def", // Rule does not begin with a valid ID
 		"Ru le -> def",
 		
-		"Rule -> ()def",
-		"Rule -> def()def",
+		"Rule -> ()",
 		"Rule -> def(*)",
 		"Rule -> (def",
 		"Rule -> def)",
 		
-		// !!!!!!!! ACCEPTED
-		"tok -> def -> def",
+		"Rule -> def -> def",	// Unexpected sep (->)
+		"Rule -> [>1]",
+		"Rule -> def [>1] abc",
+		"Rule -> * def",
+		"Rule -> def (* abc)",
+		"Rule -> d |",
+		"Rule -> | d",
+		"Rule -> abc (| def)",
+		"Rule -> d | | f",
+		"Rule -> d | f |",
+		"Rule -> def \\*",
+		
+		// ACCEPTED
+		"Rule -> abc () def",	// Empty sub-patterns are ignored
+		"Rule -> def #comment",*/
+		"#comment \n Rule -> def",
+		
 	};
 	
 	public static void main(String[] args) {

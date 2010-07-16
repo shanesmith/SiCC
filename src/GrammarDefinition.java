@@ -122,7 +122,7 @@ public class GrammarDefinition {
 			}
 			
 			if (tok.type != GrammarTokenizer.SEP_TOKEN) {
-				throw new GrammarDefinitionException("Rule seperator -> not found after rule name", tok.line);
+				throw new GrammarDefinitionException("Rule seperator (->) not found after rule name", tok.line);
 			}
 			
 			

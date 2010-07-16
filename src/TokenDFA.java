@@ -142,7 +142,7 @@ public class TokenDFA {
 			
 			if (isOperator(c)) { // operator				
 				
-				if (charclass && c != '^' && c != ']'){
+				if (charclass && c != '^' && c != ']') {
 					throw new TokenizerDefinitionException("Operator " + c + " needs escaping in character class");
 				}
 				
