@@ -591,9 +591,7 @@ public class TokenDFA {
 	}
 	
 	/**
-	 * Add a default transition to a new state, which is added at the end of the graph and becomes the new "accepting" state.
-	 * 
-	 * The old "accepting" state is left alone to become a dead end.
+	 * Replace character class transitions with their complement
 	 */
 	private void evalNegate() throws TokenizerDefinitionException {
 		
@@ -601,15 +599,22 @@ public class TokenDFA {
 			throw new TokenizerDefinitionException("Missing operand for NEGATE (^) operation");
 		}
 		
-		StateGraph<TokenizerNFAState> g = operandStack.pop();
+		StateGraph<TokenizerNFAState> graph = operandStack.pop();
 		
-		TokenizerNFAState newAcceptingState = new TokenizerNFAState();
+		TokenizerNFAState first = graph.firstElement();
+		TokenizerNFAState last = graph.lastElement();
 		
-		g.firstElement().addTransition(TokenizerState.neg, newAcceptingState);
+		Set<Character> negChars = graph.firstElement().getTransitionCharacters();
 		
-		g.add(newAcceptingState);
+		first.removeAllTransitions();
 		
-		operandStack.push(g);
+		for (char c = 1; c <= 255; c++) {
+			if (!negChars.contains(new Character(c))) {
+				first.addTransition(c, last);
+			}
+		}
+		
+		operandStack.push(graph);
 	}
 	
 	/**

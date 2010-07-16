@@ -31,6 +31,10 @@ public class TokenizerNFAState extends TokenizerState {
 		transitions.get(c).add(next);
 	}
 	
+	public void removeAllTransitions() {
+		transitions.clear();
+	}
+	
 	/**
 	 * Return attainable states on the given character
 	 */
