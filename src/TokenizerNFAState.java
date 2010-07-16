@@ -50,11 +50,6 @@ public class TokenizerNFAState extends TokenizerState {
 			trans.addAll(transitions.get(TokenizerState.wildcard));
 		}
 		
-		// if there were no valid transitions so far, use negative transitions
-		if (trans.isEmpty() && transitions.containsKey(TokenizerState.neg)) {
-			trans.addAll(transitions.get(TokenizerState.neg));
-		}
-		
 		return trans;
 	}
 	

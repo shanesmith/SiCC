@@ -16,7 +16,6 @@ public abstract class TokenizerState {
 	 * Special characters to be used in transitions
 	 */
 	public static final Character wildcard = 3;
-	public static final Character neg = 4;
 	
 	/**
 	 * The state's id

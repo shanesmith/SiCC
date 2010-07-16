@@ -57,7 +57,6 @@ public class TokenizerClassCreator {
 		out.println();
 		
 		out.println("  private static final char wildcard = " + (int)TokenizerState.wildcard + ";");
-		out.println("  private static final char neg = " + (int)TokenizerState.neg + ";");
 		out.println();
 		
 		out.println("  private LineNumberReader input;");
@@ -152,12 +151,7 @@ public class TokenizerClassCreator {
 		out.println("      nextState = DFA.get(state).get(wildcard);");
 		out.println();
 		out.println("      if (nextState == null) {");
-		out.println("        nextState = DFA.get(state).get(neg);");
-		out.println();
-		out.println("        if (nextState == null) {");
-		out.println("          nextState = -1;");
-		out.println("        }");
-		out.println();
+		out.println("        nextState = -1;");
 		out.println("      }");
 		out.println();
 		out.println("    }");

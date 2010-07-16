@@ -54,11 +54,6 @@ public class TokenizerDFAState extends TokenizerState {
 		if (trans == null) {
 			// there were no transitions for c, let's try a wildcard
 			trans = transitions.get(TokenizerState.wildcard);
-			
-			if (trans == null) {
-				// no transition for c or a wildcard, let's try a negate
-				trans = transitions.get(TokenizerState.neg);
-			}
 		}
 		
 		return trans;
