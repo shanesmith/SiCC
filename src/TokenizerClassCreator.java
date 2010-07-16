@@ -177,6 +177,57 @@ public class TokenizerClassCreator {
 		out.println("  } //end getChar");
 		out.println();
 		
+		out.println("  private " + tokclass + " createToken(String name, String value, int lineNumber) {");
+		for(TokenDFA tdfa : tokendef.getAllTokenDFA()) {
+			if (tdfa.isInternal()) continue;
+			
+			out.println("    if ( name.equals(\"" + tdfa.name + "\") ) return new " + tokclass + "(" + tdfa.name.toUpperCase() + "_TOKEN, name, value, lineNumber);");
+		}
+		out.println("    if ( name.equals(\"eof\") ) return new " + tokclass + "(EOF_TOKEN, name, value, lineNumber);");
+		out.println("    throw new RuntimeException(\"Cannot create token, unknown token name: \" + name);");
+		out.println("  }");
+		out.println();
+		
+		out.println("  private void buildDFA() {");
+		for (TokenizerDFAState s : tokendef.getMasterTokenDFA().DFA) {
+			
+			if (s.isAccepting()) {
+				accepting.put(s.id, s.getOwners().firstElement().name);
+			}
+			
+			out.println("    buildState" + s.id + "();");
+			
+		}
+		out.println();
+		for (Integer accept : accepting.keySet()) {
+			out.printf("    accepting.put(%d, \"%s\");", accept, accepting.get(accept));
+			out.println();
+		}
+		out.println("  } // end buildDFA");
+		out.println();
+		
+		for (TokenizerDFAState s : tokendef.getMasterTokenDFA().DFA) {
+			
+			String tc = new String();
+			String st = new String();
+			
+			for (Character c : s.getTransitionCharacters()) {
+				tc += (int)c + ",";
+				st += s.doTransition(c).getID() + ",";
+			}
+			
+			out.println("  private void buildState" + s.id + "() {");
+			out.println("    char[] tc = {" + tc + "};");
+			out.println("    int[]  st = {" + st + "};");
+			out.println("    Hashtable<Character, Integer> trans = new Hashtable<Character, Integer>();");
+			out.println("    for (int i = 0; i < tc.length; i++) trans.put(tc[i], st[i]);");
+			out.println("    DFA.put(" + s.id + ", trans);"); 
+			out.println("  } // end buildState" + s.id);
+			out.println();
+			
+		}
+		
+		/*
 		out.println("  private void buildDFA() {");
 		out.println("    Hashtable<Character, Integer> trans;");
 		for (TokenizerDFAState s : tokendef.getMasterTokenDFA().DFA) {
@@ -203,17 +254,9 @@ public class TokenizerClassCreator {
 		}
 		out.println("  } //end buildDFA()");
 		out.println();
+		*/
 		
-		out.println("  private " + tokclass + " createToken(String name, String value, int lineNumber) {");
-		for(TokenDFA tdfa : tokendef.getAllTokenDFA()) {
-			if (tdfa.isInternal()) continue;
-			
-			out.println("    if ( name.equals(\"" + tdfa.name + "\") ) return new " + tokclass + "(" + tdfa.name.toUpperCase() + "_TOKEN, name, value, lineNumber);");
-		}
-		out.println("    if ( name.equals(\"eof\") ) return new " + tokclass + "(EOF_TOKEN, name, value, lineNumber);");
-		out.println("    throw new RuntimeException(\"Cannot create token, unknown token name: \" + name);");
-		out.println("  }");
-		out.println();
+		
 		
 		out.println("} // end " + classname);
 		
