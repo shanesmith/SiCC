@@ -102,8 +102,11 @@ public class GrammarRuleBuilder {
 				case GrammarTokenizer.RPAREN_TOKEN:
 					if (operandStack.peek() == null) {
 						// empty subpattern
+						char op;
+						if ((op = operatorStack.pop()) != '(') {
+							throw new GrammarDefinitionException("Missing operand for " + op + " operation");
+						}
 						nameStack.pop();
-						operatorStack.pop();
 						operandStack.pop();
 						continue;
 					}
@@ -111,7 +114,7 @@ public class GrammarRuleBuilder {
 					while ( true ) {
 						
 						if (operatorStack.empty()) {
-							throw new GrammarDefinitionException("Unbalanced sub-expression, could not find beggining (");
+							throw new GrammarDefinitionException("Unbalanced sub-expression, could not find beginning (");
 						}
 						
 						if (operatorStack.peek() == '(') {

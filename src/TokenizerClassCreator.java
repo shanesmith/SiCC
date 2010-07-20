@@ -49,7 +49,7 @@ public class TokenizerClassCreator {
 		
 		int i = 1;
 		for(TokenDFA tdfa : tokendef.getAllTokenDFA()) {
-			if (tdfa.isInternal()) continue;
+			if (tdfa.isInternal() || tdfa.name.equals("skip")) continue;
 			
 			out.println("  public static final int " + tdfa.name.toUpperCase() + "_TOKEN = " + (i++) + "; // " + tdfa.regexp);
 		}
@@ -179,7 +179,7 @@ public class TokenizerClassCreator {
 		
 		out.println("  private " + tokclass + " createToken(String name, String value, int lineNumber) {");
 		for(TokenDFA tdfa : tokendef.getAllTokenDFA()) {
-			if (tdfa.isInternal()) continue;
+			if (tdfa.isInternal() || tdfa.name.equals("skip")) continue;
 			
 			out.println("    if ( name.equals(\"" + tdfa.name + "\") ) return new " + tokclass + "(" + tdfa.name.toUpperCase() + "_TOKEN, name, value, lineNumber);");
 		}

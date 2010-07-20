@@ -5,32 +5,35 @@ public class GrammarDefinitionTest {
 	
 	public static final String[] definitions = {
 	
-		/*"tok",			// Rule seperator -> not found after rule name
+		"tok",			// Rule seperator -> not found after rule name
 		"-> tok",		// Rule does not begin with a valid ID
 		"9Rule -> def", // Rule does not begin with a valid ID
-		"Ru le -> def",
+		"Ru le -> def", // Rule seperator (->) not found after rule name
 		
-		"Rule -> ()",
-		"Rule -> def(*)",
-		"Rule -> (def",
-		"Rule -> def)",
+		"Rule -> ",			// Empty rule definition
+		"Rule -> ()",		// Empty rule definition
+		"Rule -> def(*)",	// Missing operand for * operation
+		"Rule -> def (abc|) cgh", // Missing operand for ALTERN (|) operation
+		"Rule -> (def",		// Unbalanced sub-expression, could not find end )
+		"Rule -> def)",		// Unbalanced sub-expression, could not find beginning )
 		
 		"Rule -> def -> def",	// Unexpected sep (->)
-		"Rule -> [>1]",
-		"Rule -> def [>1] abc",
-		"Rule -> * def",
-		"Rule -> def (* abc)",
-		"Rule -> d |",
-		"Rule -> | d",
-		"Rule -> abc (| def)",
-		"Rule -> d | | f",
-		"Rule -> d | f |",
-		"Rule -> def \\*",
+		"Rule -> [>1]",			// Empty rule definition
+		"Rule -> def [>1] abc", // Expected eol after multi-child token
+		"Rule -> * def",		// Missing operand for ZERO-PLUS (*) operation
+		"Rule -> def (* abc)",	// Missing operand for ZERO-PLUS (*) operation
+		"Rule -> d |",			// Missing operand for ALTERN (|) operation
+		"Rule -> | d",			// Missing operand for ALTERN (|) operation
+		"Rule -> abc (| def)",	// Missing operand for ALTERN (|) operation
+		"Rule -> d | | f",		// Missing operand for ALTERN (|) operation
+		"Rule -> d | f |",		// Missing operand for ALTERN (|) operation
+		"Rule -> def \\*",		// Invalid: \
+		"Rule -> [def]", 		// Invalid: [d
 		
 		// ACCEPTED
 		"Rule -> abc () def",	// Empty sub-patterns are ignored
-		"Rule -> def #comment",*/
-		"#comment \n Rule -> def",
+		"Rule -> def #comment",
+		"Ruleone -> def #comment \n Rule -> def",
 		
 	};
 	
