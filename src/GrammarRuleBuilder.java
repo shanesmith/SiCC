@@ -54,12 +54,12 @@ public class GrammarRuleBuilder {
 	/**
 	 * Constructor.
 	 */
-	public GrammarRuleBuilder (String name, GrammarTokenizer tokenizer, GrammarDefinition grammardef, boolean first) throws GrammarDefinitionException, TokenizerException {
+	public GrammarRuleBuilder (String name, GrammarTokenizer tokenizer, GrammarDefinition grammardef) throws GrammarDefinitionException, TokenizerException {
 		this.name = name;
 		this.grammardef = grammardef;
 		
 		try {
-			parse(tokenizer, first);
+			parse(tokenizer);
 		}
 		catch (NoSuchTokenException ex) {
 			throw new GrammarDefinitionException("Invalid: " + ex.getValue(), tokenizer.getLineNumber());
@@ -72,7 +72,7 @@ public class GrammarRuleBuilder {
 	/**
 	 * Parse definition using the given tokenizer (assumed to be positioned at the beginning of the RHS).  
 	 */
-	private void parse(GrammarTokenizer tokenizer, boolean first) throws GrammarDefinitionException, TokenizerException {
+	private void parse(GrammarTokenizer tokenizer) throws GrammarDefinitionException, TokenizerException {
 		
 		Token tok;
 		
@@ -162,7 +162,7 @@ public class GrammarRuleBuilder {
 			throw new GrammarDefinitionException("Empty rule definition");
 		}
 		
-		if (first) {
+		if (name == grammardef.getStartRuleName()) {
 			// implicit EOF token for the first rule of the grammar
 			pushOperator(opConcat);
 			pushOperand(new GrammarState("eof", GrammarState.TOKEN));

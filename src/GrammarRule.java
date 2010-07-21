@@ -11,7 +11,7 @@ import java.util.*;
  *  
  *  		A -> B (C D)*
  *  
- *  	would be split into the following
+ *  	would be split into
  *  
  *  		A    -> B A{1}*
  *  		A{1} -> C D
@@ -69,7 +69,7 @@ public class GrammarRule {
 	 *  in other words finds all terminals in this rule that can be found
 	 *  directly after the given rulename
 	 */
-	public HashSet<String> getFollowOf(String rulename) {
+	public HashSet<String> getFollowOf(String rulename) throws GrammarDefinitionException {
 		HashSet<String> follow = new HashSet<String>();
 		
 		// rule is epsilon, return empty set
@@ -131,7 +131,17 @@ public class GrammarRule {
 	/**
 	 * Return the results of FIRST on this rule 
 	 */
-	public Vector<String> first() {
+	public Vector<String> first() throws GrammarDefinitionException {
+		return _first(new HashSet<String>());
+	}
+	
+	
+	private Vector<String> _first(HashSet<String> path) throws GrammarDefinitionException {
+		
+		// check for left recursion
+		if (path.contains(name)) {
+			throw new GrammarDefinitionException("Left recursion detected for rule \"" + name + "\"");
+		} 
 		
 		Vector<String> first = new Vector<String>();
 		
@@ -146,7 +156,10 @@ public class GrammarRule {
 		
 		if (firststate.type == GrammarState.RULE) {
 			// state is a rule, at FIRST of that rule
-			first.addAll( grammardef.first(firststate.name) );
+			path.add(name);
+			for (GrammarRule rule : grammardef.getRules(firststate.name)) {
+				first.addAll( rule._first(path) );
+			}
 		}
 		else if (firststate.type == GrammarState.TOKEN) {
 			// state is a token (terminal), simply add to first

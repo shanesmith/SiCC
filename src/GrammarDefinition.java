@@ -64,14 +64,14 @@ public class GrammarDefinition {
 	/**
 	 * Add a production to the table at location (rulename, tokenname) 
 	 */
-	private void addToTable(String rulename, String tokenname, GrammarRule rule) {
+	private void addToTable(String rulename, String tokenname, GrammarRule rule) throws GrammarDefinitionException {
 		
 		if (!table.containsKey(rulename)) {
 			table.put(rulename, new HashMap<String, GrammarRule>());
 		}
 		
 		if (table.get(rulename).containsKey(tokenname)) {
-			throw new RuntimeException("Terminal \"" + tokenname + "\" already exists for rule \"" + rulename + "\"");
+			throw new GrammarDefinitionException("Ambiguous grammar detected: rule " + rulename + " with token \"" + tokenname + "\"");
 		}
 		
 		table.get(rulename).put(tokenname, rule);
@@ -110,6 +110,11 @@ public class GrammarDefinition {
 			else {
 				rulename = tok.value;
 				lineNumber = tok.line;
+				
+				// If startRuleName is null then this rule is the first defined, and therefore the start rule
+				if (startRuleName == null) {
+					startRuleName = rulename;
+				}
 			}
 			
 			
@@ -130,7 +135,7 @@ public class GrammarDefinition {
 			GrammarRuleBuilder rulebuilder;
 			
 			try {
-				rulebuilder = new GrammarRuleBuilder(rulename, tokenizer, this, startRuleName == null);
+				rulebuilder = new GrammarRuleBuilder(rulename, tokenizer, this);
 			}
 			catch (GrammarDefinitionException ex) {
 				// re-throw with a line number
@@ -142,11 +147,6 @@ public class GrammarDefinition {
 				if (!rules.containsKey(name)) rules.put(name, new Vector<GrammarRule>());
 				
 				rules.get(name).addAll(rulebuilder.getRules(name));
-			}
-			
-			// If startRuleName is null then this rule is the first defined, and therefore the start rule
-			if (startRuleName == null) {
-				startRuleName = rulename;
 			}
 			
 		}
@@ -176,7 +176,7 @@ public class GrammarDefinition {
 	/**
 	 * Build the parse table by using FIRST and FOLLOW
 	 */
-	private void buildParseTable() {
+	private void buildParseTable() throws GrammarDefinitionException {
 		
 		for (Vector<GrammarRule> altrules : rules.values()) {
 			for (GrammarRule rule : altrules) {
@@ -205,8 +205,10 @@ public class GrammarDefinition {
 	
 	/**
 	 * Return the set of terminals that can be found as the first terminal of the given rule 
+	 * 
+	 * Argument path is used for recursion checking, supply an empty HashSet 
 	 */
-	public HashSet<String> first(String rulename) {
+	public HashSet<String> first(String rulename) throws GrammarDefinitionException {
 		HashSet<String> first = new HashSet<String>();
 		
 		for (GrammarRule r : rules.get(rulename)) {
@@ -217,9 +219,9 @@ public class GrammarDefinition {
 	}
 	
 	/**
-	 * Returns the set of terminals that can be found immediately following the given rule 
+	 * Returns the set of terminals that can be found immediately following the given rule in all rule definitions
 	 */
-	public HashSet<String> follow(String rulename) {
+	public HashSet<String> follow(String rulename) throws GrammarDefinitionException {
 		HashSet<String> follow = new HashSet<String>();
 		
 		for (Vector<GrammarRule> v : rules.values()) {
@@ -235,3 +237,4 @@ public class GrammarDefinition {
 	}
 	
 }
+ 
