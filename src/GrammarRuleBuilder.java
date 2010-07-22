@@ -139,6 +139,10 @@ public class GrammarRuleBuilder {
 					pushOperand(new GrammarState(tok.value, GrammarState.UNKNOWN));
 					break;
 					
+				case GrammarTokenizer.EPSILON_TOKEN:
+					pushOperand(new GrammarState(tok.value, GrammarState.EPSILON));
+					break;
+					
 				case GrammarTokenizer.MULTI_CHILD_TOKEN:
 					multi_child = true;
 					
@@ -162,12 +166,6 @@ public class GrammarRuleBuilder {
 			throw new GrammarDefinitionException("Empty rule definition");
 		}
 		
-		if (name == grammardef.getStartRuleName()) {
-			// implicit EOF token for the first rule of the grammar
-			pushOperator(opConcat);
-			pushOperand(new GrammarState("eof", GrammarState.TOKEN));
-		}
-		
 		while (!operatorStack.empty()) {
 			if (operatorStack.peek() == '(') {
 				throw new GrammarDefinitionException("Unbalanced sub-expression, could not find end )");
@@ -178,8 +176,15 @@ public class GrammarRuleBuilder {
 		
 		addRule(nameStack.pop(), operandStack.pop());
 		
-		for (GrammarRule rule : rules.get(this.name)) {
+		for (GrammarRule rule : rules.get(name)) {
+			
+			// implicit EOF token for the first rule of the grammar
+			if (name.equals(grammardef.getStartRuleName())) {
+				rule.getGraph().addLast(new GrammarState("eof", GrammarState.TOKEN));
+			}
+			
 			rule.setMultiChild(multi_child);
+			
 		}
 		
 	}
@@ -319,6 +324,8 @@ public class GrammarRuleBuilder {
 	 */
 	private void evalZeroPlus() throws GrammarDefinitionException {
 		
+		//TO-DO {E} ? Exception on epsilon graph ?
+		
 		if (operandStack.size() < 1 || operandStack.peek() == null) {
 			throw new GrammarDefinitionException("Missing operand for ZERO-PLUS (*) operation");
 		}
@@ -326,13 +333,13 @@ public class GrammarRuleBuilder {
 		String subrulename = getNewName();
 		
 		StateGraph<GrammarState> subrulegraph = operandStack.pop();
-	
-		GrammarState repeat = new GrammarState(subrulename, GrammarState.RULE);
+		subrulegraph.addLast(new GrammarState(subrulename, GrammarState.RULE)); // repeat
 		
-		subrulegraph.addLast(repeat);
+		StateGraph<GrammarState> epsilongraph = new StateGraph<GrammarState>();
+		epsilongraph.add(new GrammarState("\\0", GrammarState.EPSILON));
 		
 		addSubrule(subrulename, subrulegraph);
-		addSubrule(subrulename, null);
+		addSubrule(subrulename, epsilongraph);
 		
 		pushOperand(new GrammarState(subrulename, GrammarState.RULE));
 		
@@ -343,6 +350,8 @@ public class GrammarRuleBuilder {
 	 */
 	private void evalOptional() throws GrammarDefinitionException {
 		
+		//TO-DO {E} ? Exception on epsilon graph ?
+		
 		if (operandStack.size() < 1 || operandStack.peek() == null) {
 			throw new GrammarDefinitionException("Missing operant for ZERO-PLUS (*) operation");
 		}
@@ -351,8 +360,11 @@ public class GrammarRuleBuilder {
 		
 		StateGraph<GrammarState> subrulegraph = operandStack.pop();
 		
+		StateGraph<GrammarState> epsilongraph = new StateGraph<GrammarState>();
+		epsilongraph.add(new GrammarState("\\0", GrammarState.EPSILON));
+		
 		addSubrule(subrulename, subrulegraph);
-		addSubrule(subrulename, null);
+		addSubrule(subrulename, epsilongraph);
 		
 		pushOperand(new GrammarState(subrulename, GrammarState.RULE));
 		
@@ -362,12 +374,11 @@ public class GrammarRuleBuilder {
 	 * Push a concat operation if appropriate 
 	 */
 	private void detectImplicitConcat(Token tokLeft, Token tokRight) throws GrammarDefinitionException {
-		if (tokLeft == null || tokRight == null) return;
+		int[] leftOK = { GrammarTokenizer.ID_TOKEN, GrammarTokenizer.EPSILON_TOKEN, GrammarTokenizer.RPAREN_TOKEN, GrammarTokenizer.OP_TOKEN };
+		int[] rightOK = { GrammarTokenizer.ID_TOKEN, GrammarTokenizer.EPSILON_TOKEN, GrammarTokenizer.LPAREN_TOKEN };
 		
-		if (tokLeft.type == GrammarTokenizer.ID_TOKEN || tokLeft.type == GrammarTokenizer.RPAREN_TOKEN || (tokLeft.type == GrammarTokenizer.OP_TOKEN && !tokLeft.value.equals("|"))) {
-			if (tokRight.type == GrammarTokenizer.ID_TOKEN || tokRight.type == GrammarTokenizer.LPAREN_TOKEN) {
-				pushOperator(opConcat);
-			}
+		if (Utils.in_array(tokLeft.type, leftOK) && !tokLeft.value.equals("|") && Utils.in_array(tokRight.type, rightOK)) {
+			pushOperator(opConcat);
 		}
 	}
 	

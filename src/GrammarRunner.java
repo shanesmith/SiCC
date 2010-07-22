@@ -82,9 +82,9 @@ public class GrammarRunner {
 						stateStack.push(null);
 					}
 					
-					if (newrule.hasGraph()) {
-						stateStack.addAll(0, newrule.getGraph());
-					}
+					//if (newrule.hasGraph()) {
+					//	stateStack.addAll(0, newrule.getGraph());
+					//}
 				}
 				
 			}

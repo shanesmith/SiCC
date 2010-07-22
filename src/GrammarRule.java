@@ -69,13 +69,8 @@ public class GrammarRule {
 	 *  in other words finds all terminals in this rule that can be found
 	 *  directly after the given rulename
 	 */
-	public HashSet<String> getFollowOf(String rulename) throws GrammarDefinitionException {
+	public HashSet<String> getFollowOf(String rulename, HashSet<String> path) throws GrammarDefinitionException {
 		HashSet<String> follow = new HashSet<String>();
-		
-		// rule is epsilon, return empty set
-		if (graph == null) {
-			return follow;
-		}
 		
 		// iterate over this rule's graph, looking for a rule state called rulename
 		Iterator<GrammarState> it = graph.iterator();
@@ -86,38 +81,40 @@ public class GrammarRule {
 			
 			if (state.type == GrammarState.RULE && state.name.equals(rulename)) {
 				
-				Stack<GrammarState> process = new Stack<GrammarState>();
+				GrammarState nextState = getNonEpsilonNext(it);
 				
-				// add the next state to the process stack
-				// or push null to identify the end of the graph
-				process.push(it.hasNext() ? it.next() : null);
-				
-				while (!process.isEmpty()) {
-				
-					GrammarState processState = process.pop();
+				if (nextState != null) {
 					
-					if (processState == null) { 
-						if (!this.getName().equals(rulename)) {
-							follow.addAll( grammardef.follow(this.getName()) );
-						}
-					}					
-					else if (processState.type == GrammarState.TOKEN) {
+					if (nextState.type == GrammarState.TOKEN) {
 						// next state is a token (terminal), simply add to the follow set
-						follow.add(processState.name);
+						follow.add(nextState.name);
+						
+						if (nextState.name.equals("eof") && !path.contains(this.name)) {
+							follow.addAll(grammardef.follow(this.name, path));
+						}
 					}
-					else if (processState.type == GrammarState.RULE) {
+					else if (nextState.type == GrammarState.RULE) {
 						// next state is a rule, add FIRST of the next state
-						HashSet<String> nextFirst = grammardef.first(processState.name);
+						HashSet<String> nextFirst = grammardef.first(nextState.name);
 						
 						// if first of next state contains a null (epsilon) terminal
 						// then remove it and include FOLLOW of the next state
 						if (nextFirst.contains(null)) {
 							nextFirst.remove(null);
-							follow.addAll(grammardef.follow(processState.name));
+							if (!path.contains(nextState.name)) {
+								nextFirst.addAll(grammardef.follow(nextState.name, path));
+							}
 						}
 						
 						follow.addAll(nextFirst);
 						
+					}
+					
+				} else {
+					// end of graph
+					
+					if (!path.contains(this.name)) {
+						follow.addAll( grammardef.follow(this.name, path) );
 					}
 					
 				}
@@ -140,34 +137,50 @@ public class GrammarRule {
 		
 		// check for left recursion
 		if (path.contains(name)) {
-			throw new GrammarDefinitionException("Left recursion detected for rule \"" + name + "\"");
+			throw new GrammarDefinitionException("Left recursion detected at rule \"" + name + "\"");
 		} 
 		
 		Vector<String> first = new Vector<String>();
 		
-		// if graph is null (epsilon)
-		// add the epsilon state and return
-		if (graph == null) {
-			first.add(null);
-			return first;
-		}
+		GrammarState firststate = getNonEpsilonNext(graph.iterator());
 		
-		GrammarState firststate = graph.firstElement();
+		if (firststate != null) {
 		
-		if (firststate.type == GrammarState.RULE) {
-			// state is a rule, at FIRST of that rule
-			path.add(name);
-			for (GrammarRule rule : grammardef.getRules(firststate.name)) {
-				first.addAll( rule._first(path) );
+			if (firststate.type == GrammarState.RULE) {
+				// state is a rule, at FIRST of that rule
+				path.add(name);
+				for (GrammarRule rule : grammardef.getRules(firststate.name)) {
+					first.addAll( rule._first(path) );
+				}
+				path.remove(name);
 			}
-		}
-		else if (firststate.type == GrammarState.TOKEN) {
-			// state is a token (terminal), simply add to first
-			first.add(firststate.name);
+			else if (firststate.type == GrammarState.TOKEN) {
+				// state is a token (terminal), simply add to first
+				first.add(firststate.name);
+			}
+			
+		} else {
+			// end of graph, simply an epsilon rule
+			
+			first.add(null);
+			
 		}
 		
 		return first;
 		
+	}
+	
+	/**
+	 * Returns the next state that is not an EPSILON, or null if it reached the end
+	 */
+	private GrammarState getNonEpsilonNext(Iterator<GrammarState> it) {
+		while (it.hasNext()) {
+			GrammarState nextState = it.next();
+			if (nextState.type != GrammarState.EPSILON) {
+				return nextState;
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -180,8 +193,6 @@ public class GrammarRule {
 	public void setMultiChild(boolean multi) { multi_child = multi; } 
 	
 	public boolean isSubrule() { return subrule; }
-	
-	public boolean hasGraph() { return graph != null; }
 	
 	public StateGraph<GrammarState> getGraph() { return graph; }
 	

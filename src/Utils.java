@@ -15,6 +15,12 @@ public class Utils {
 		return false;
 	}
 	
+	public static boolean in_array(int i, int[] array) {
+		for (int a : array) {
+			if (i == a) return true;
+		}
+		return false;
+	}
 	
 	public static String escape(Character c) {
 		return escape(c.toString());

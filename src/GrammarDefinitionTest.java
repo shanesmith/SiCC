@@ -11,6 +11,7 @@ public class GrammarDefinitionTest {
 		"Ru le -> def", // Rule seperator (->) not found after rule name
 		
 		"Rule -> ",			// Empty rule definition
+		"Rule -> #comment", // Empty rule definition
 		"Rule -> ()",		// Empty rule definition
 		"Rule -> def(*)",	// Missing operand for * operation
 		"Rule -> def (abc|) cgh", // Missing operand for ALTERN (|) operation
@@ -30,10 +31,17 @@ public class GrammarDefinitionTest {
 		"Rule -> def \\*",		// Invalid: \
 		"Rule -> [def]", 		// Invalid: [d
 		
+		"A -> A b",				// Left recursion detected at rule "A"
+		"A -> B b \n B -> A c", // Left recursion detected at rule "A"
+		"A -> c d | c e",		// Ambiguous grammar detected at rule "A" with token "c"
+		"S -> i E t S | i E t S e S \n E -> a",				// Ambiguous grammar detected at rule "S" with token "i"
+		"S -> i E t S R | a \n R -> e S | \\0 \n E -> b",	// Ambiguous grammar detected at rule "R" with token "e"
+		
+		
 		// ACCEPTED
 		"Rule -> abc () def",	// Empty sub-patterns are ignored
 		"Rule -> def #comment",
-		"Ruleone -> def #comment \n Rule -> def",
+		"Rule -> abc #comment \n Rule -> def",
 		
 	};
 	

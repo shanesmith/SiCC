@@ -604,12 +604,20 @@ public class TokenDFA {
 		TokenizerNFAState first = graph.firstElement();
 		TokenizerNFAState last = graph.lastElement();
 		
-		Set<Character> negChars = graph.firstElement().getTransitionCharacters();
+		Set<Character> negCharSet = graph.firstElement().getTransitionCharacters();
+		
+		char[] negChars = new char[negCharSet.size()];
+		
+		int i = 0;
+		for (Character c : negCharSet) {
+			negChars[i++] = c;
+		}
 		
 		first.removeAllTransitions();
 		
-		for (char c = 1; c <= 255; c++) {
-			if (!negChars.contains(new Character(c))) {
+		// start at 9 since lower values may be used for special meaning
+		for (char c = 9; c <= 255; c++) {
+			if (!Utils.in_array(c, negChars)) {
 				first.addTransition(c, last);
 			}
 		}

@@ -51,11 +51,11 @@ public class GrammarDefinition {
 	public GrammarRule getProduction(String rulename, String tokenname) { 
 		
 		if (!table.containsKey(rulename)) {
-			throw new RuntimeException("Invalid rule name: " + rulename);
+			throw new RuntimeException("Could not find rule \"" + rulename + "\"");
 		}
 		
 		if (!table.get(rulename).containsKey(tokenname)) {
-			throw new RuntimeException("Invalid token \"" + tokenname + "\" for rule \"" + rulename + "\"");
+			throw new RuntimeException("Could not find token \"" + tokenname + "\" for rule \"" + rulename + "\"");
 		}
 		
 		return table.get(rulename).get(tokenname); 
@@ -71,7 +71,7 @@ public class GrammarDefinition {
 		}
 		
 		if (table.get(rulename).containsKey(tokenname)) {
-			throw new GrammarDefinitionException("Ambiguous grammar detected: rule " + rulename + " with token \"" + tokenname + "\"");
+			throw new GrammarDefinitionException("Ambiguous grammar detected at rule \"" + rulename + "\" with token \"" + tokenname + "\"");
 		}
 		
 		table.get(rulename).put(tokenname, rule);
@@ -144,7 +144,9 @@ public class GrammarDefinition {
 			
 			// Add the rules returned by the rule builder to the set of all rules
 			for (String name : rulebuilder.getRules().keySet()) {
-				if (!rules.containsKey(name)) rules.put(name, new Vector<GrammarRule>());
+				if (!rules.containsKey(name)) {
+					rules.put(name, new Vector<GrammarRule>());
+				}
 				
 				rules.get(name).addAll(rulebuilder.getRules(name));
 			}
@@ -157,13 +159,13 @@ public class GrammarDefinition {
 			
 			for (GrammarRule rule : altrules) {
 				
-				if (!rule.hasGraph()) continue; 
-					
 				for (GrammarState state : rule.getGraph()) {
 					
-					if (state.type != GrammarState.UNKNOWN) continue;
+					if (state.type == GrammarState.UNKNOWN) {
 						
-					state.type = rules.containsKey(state.name) ? GrammarState.RULE : GrammarState.TOKEN;
+						state.type = rules.containsKey(state.name) ? GrammarState.RULE : GrammarState.TOKEN;
+					
+					}
 					
 				}
 					
@@ -220,20 +222,30 @@ public class GrammarDefinition {
 	
 	/**
 	 * Returns the set of terminals that can be found immediately following the given rule in all rule definitions
+	 * 
+	 * Null indicates eof
 	 */
-	public HashSet<String> follow(String rulename) throws GrammarDefinitionException {
+	public HashSet<String> follow(String rulename, HashSet<String> path) throws GrammarDefinitionException {
 		HashSet<String> follow = new HashSet<String>();
+		
+		path.add(rulename);
 		
 		for (Vector<GrammarRule> v : rules.values()) {
 			for (GrammarRule r : v) {
-				follow.addAll(r.getFollowOf(rulename));
+				follow.addAll(r.getFollowOf(rulename, path));
 			}
 		}
-		
-		
-		if (follow.isEmpty()) follow.add(null);
+
+		// nothing follows, therefore return null for eof
+		if (follow.isEmpty()) {
+			follow.add(null);
+		}
 		
 		return follow;
+	}
+	
+	public HashSet<String> follow(String rulename) throws GrammarDefinitionException {
+		return follow(rulename, new HashSet<String>());
 	}
 	
 }

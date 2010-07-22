@@ -1,6 +1,7 @@
 
 import java.io.PrintWriter;
 
+//TODO Better Exception throwing/handling
 
 /**
  * Output the Parser class based on the passed grammar definition
@@ -135,8 +136,8 @@ public class ParserClassCreator {
 		out.println("          stateStack.push(null);");
 		out.println("        }");
 		out.println();
-		out.println("        if (newrule.graph != null) {");
-		out.println("          for (int i = newrule.graph.length-1; i >= 0; i--) {");
+		out.println("        for (int i = newrule.graph.length-1; i >= 0; i--) {");
+		out.println("          if (newrule.graph[i].type != GrammarState.EPSILON) {");
 		out.println("            stateStack.push(newrule.graph[i]);");
 		out.println("          }");
 		out.println("        }");
@@ -189,14 +190,10 @@ public class ParserClassCreator {
 				String multi = rule.isMultiChild() ? "true" : "false";
 				String sub = rule.isSubrule() ? "true" : "false";
 				
-				if (rule.hasGraph()) {
-					int i = 0;
-					out.println("      graph = new GrammarState[" + rule.getGraph().size() + "];");
-					for (GrammarState state : rule.getGraph()) {
-						out.println("      graph[" + (i++) + "] = new GrammarState(\"" + state.name + "\", " + state.type + ");");
-					}
-				} else {
-					out.println("      graph = null;");
+				int i = 0;
+				out.println("      graph = new GrammarState[" + rule.getGraph().size() + "];");
+				for (GrammarState state : rule.getGraph()) {
+					out.println("      graph[" + (i++) + "] = new GrammarState(\"" + state.name + "\", " + state.type + ");");
 				}
 				
 				out.println("      table.get(\"" + rulename + "\").put(\"" + tokname + "\", new GrammarRule(\"" + rule.getName() + "\", " + multi + ", " + sub + ", graph));");
@@ -233,7 +230,7 @@ public class ParserClassCreator {
 	private void outputGrammarStateClass(PrintWriter out) {
 		
 		out.println("  private class GrammarState {");
-		out.println("    public static final int TOKEN = 1, RULE = 2;");
+		out.println("    public static final int TOKEN = 1, RULE = 2, EPSILON = 3;");
 		out.println("    String name;");
 		out.println("    int type;");
 		out.println("    public GrammarState(String n, int t) { name = n; type = t; }");

@@ -7,7 +7,7 @@ public class GrammarState {
 	/**
 	 * Available types of states
 	 */
-	public static final int UNKNOWN = 0, TOKEN = 1, RULE = 2;
+	public static final int UNKNOWN = 0, TOKEN = 1, RULE = 2, EPSILON = 3;
 	
 	/**
 	 * The type of this state
@@ -34,6 +34,7 @@ public class GrammarState {
 		switch (type) {
 			case TOKEN: return "T";
 			case RULE: return "R";
+			case EPSILON: return "E";
 			case UNKNOWN: default: return "?";
 		}
 	}
