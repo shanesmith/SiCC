@@ -110,12 +110,16 @@ public class ssCC {
 			
 			System.exit(0);
 		}
+		catch (ArgumentParsingException e) {
+			System.out.println("Arguments passed to ssCC are invalid: " + e);
+			System.exit(1);
+		}
 		catch (TokenizerDefinitionException e) {
 			System.out.println("Error in token definition file: " +  e);
 			System.exit(1);
 		}
-		catch (ArgumentParsingException e) {
-			System.out.println("Arguments passed to ssCC are invalid: " + e);
+		catch (GrammarDefinitionException e) {
+			System.out.println("Error in grammar definition file: " + e);
 			System.exit(1);
 		}
 		catch (Exception e) {
@@ -280,6 +284,7 @@ public class ssCC {
 		// create Parser (and others) if grammar definition is set
 		if (grammardef != null) {
 			createParserClass();
+			createParserExceptionClass();
 			createVisitorInterface();
 			createASTNodeClasses();
 		}
@@ -323,7 +328,7 @@ public class ssCC {
 		out.println("public class " + classname + " extends " + extendsclass + " {");
 		out.println("  private static final long serialVersionUID = 1L;");
 		out.println("  private String value;");
-		out.println("  public " + classname + " (String value, int lineNumber) { super(\"No such token for: \" + value, lineNumber); this.value = value; }");
+		out.println("  public " + classname + " (String value, int lineNumber) { super(\"No such token: \" + value, lineNumber); this.value = value; }");
 		out.println("  public String getValue() { return value; }");
 		out.println("} // end " + classname);
 		
@@ -337,6 +342,19 @@ public class ssCC {
 		PrintWriter out = getWriter(prefix + "Parser.java");
 		
 		new ParserClassCreator(prefix, grammardef).output(out);
+		
+		out.close();
+	}
+	
+	private void createParserExceptionClass() throws IOException {
+		String classname = prefix + "ParserException";
+		
+		PrintWriter out = getWriter(classname + ".java");
+		
+		out.println("public class " + classname + " extends Exception {");
+		out.println("  private static final long serialVersionUID = 1L;");
+		out.println("  public " + classname + " (String msg) { super(msg); }");
+		out.println("}");
 		
 		out.close();
 	}
@@ -444,10 +462,10 @@ public class ssCC {
 		out.println("  private Vector<ASTNode> children = new Vector<ASTNode>();"); out.println();
 		out.println("  private String name, value;"); out.println();
 		out.println("  private boolean multi_child;"); out.println();
-		out.println("  public " + classname + " (String n, String v, boolean m, ASTNode p) { name=n; value=v; multi_child=m; parent=p; }"); out.println();
+		out.println("  public " + classname + " (String n, String v, boolean m) { name=n; value=v; multi_child=m; }"); out.println();
 		out.println("  public boolean isMultiChild() { return multi_child; }"); out.println();
-		out.println("  public void addChild(ASTNode node) { children.add(node); }"); out.println();
-		out.println("  public void removeChild(ASTNode node) { children.remove(node); }"); out.println();
+		out.println("  public void addChild(ASTNode node) { if (node.parent != null) throw new RuntimeException(\"Node already has parent, can't add as child\");  children.add(node); node.parent = this; }"); out.println();
+		out.println("  public void removeChild(ASTNode node) { children.remove(node); node.parent = null; }"); out.println();
 		out.println("  public Vector<ASTNode> getChildren() { return children; }"); out.println();
 		out.println("  public ASTNode getChild(int i) { return children.get(i); }"); out.println();
 		out.println("  public int numChildren() { return children.size(); }"); out.println();
@@ -482,7 +500,7 @@ public class ssCC {
 			out = getWriter(classname + ".java");
 			
 			out.println("public class " + classname + " extends " + extendname + " {");
-			out.println("  public " + classname + " (String n, String v, boolean m, ASTNode p) { super(n,v,m,p); }");
+			out.println("  public " + classname + " (String n, String v, boolean m) { super(n,v,m); }");
 			out.println("} // end " + classname);
 			
 			out.close();
@@ -495,7 +513,7 @@ public class ssCC {
 		out = getWriter(classname + ".java");
 		
 		out.println("public class " + classname + " extends " + extendname + " {");
-		out.println("  public " + classname + " (String n, String v, ASTNode p) { super(n,v,false,p); }" );
+		out.println("  public " + classname + " (String n, String v) { super(n,v,false); }" );
 		out.println("}");
 		
 		out.close();
@@ -508,7 +526,18 @@ public class ssCC {
 	 */
 	private PrintWriter getWriter(String filename) throws IOException {
 		if (!packagename.isEmpty()) {
-			new File(packagename).mkdir();
+			File packagedir = new File(packagename);
+			
+			if (!packagedir.exists()) {
+				boolean createdDir = packagedir.mkdir();
+				
+				if (!createdDir) {
+					throw new IOException("Failed to create package directory \"" + packagename + "\" for unknown reasons.");
+				}	
+			}
+			else if (packagedir.isFile()) {
+				throw new IOException("Failed to create package directory \"" + packagename + "\", file exists.");
+			}			
 			
 			filename = packagename + "/" + filename;
 		}

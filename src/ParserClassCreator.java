@@ -77,7 +77,7 @@ public class ParserClassCreator {
 		
 		String tokenname = prefix + "Token";
 		
-		out.println("  public " + node(startRuleName) + " parse() throws Exception {");
+		out.println("  public " + node(startRuleName) + " parse() throws ParserException, TokenizerException {");
 		out.println("    " + tokenname + " curToken;");
 		out.println();
 		out.println("    GrammarState curState;");
@@ -97,23 +97,29 @@ public class ParserClassCreator {
 		out.println();
 		out.println("      if (curState == null) {");
 		out.println();
+		out.println("        ASTNode nextNode = curNode.getParent();");
+		out.println();
 		out.println("        if (curNode.isMultiChild() && curNode.numChildren() == 1) {");
+		out.println("          ASTNode parentNode = curNode.getParent();");
+		out.println("          parentNode.removeChild(curNode);");
+		out.println("          parentNode.addChild( curNode.getChildren().firstElement() );");
+		out.println("        }");
+		out.println("        else if (curNode.numChildren() == 0) {");
 		out.println("          curNode.getParent().removeChild(curNode);");
-		out.println("          curNode.getParent().addChild( curNode.getChildren().firstElement() );");
 		out.println("        }");
 		out.println();
-		out.println("        curNode = curNode.getParent();");
+		out.println("        curNode = nextNode;");
 		out.println();
 		out.println("      }"); 
 		out.println("      else if (curState.type == GrammarState.TOKEN) {");
 		out.println();
 		out.println("        if (!curState.name.equals(curToken.name)) {");
-		out.println("          throw new Exception(\"Tokens do not match! read: \\\"\" + curToken.name + \"\\\"  stack: \\\"\" + curState.name + \"\\\"\");");
+		out.println("          throw new ParserException(\"Expected token \\\"\" + curState.name + \"\\\" but received \\\"\" + curToken.name + \"\\\"\");");
 		out.println("        }");
 		out.println();
 		out.println("        if (curToken.name.equals(\"eof\")) break;");
 		out.println();
-		out.println("        curNode.addChild(new ASTToken(curToken.name, curToken.value, curNode));");
+		out.println("        curNode.addChild(new ASTToken(curToken.name, curToken.value));");
 		out.println();		
 		out.println("        curToken = tokenizer.nextToken();");
 		out.println();
@@ -122,13 +128,15 @@ public class ParserClassCreator {
 		out.println();
 		out.println("        GrammarRule newrule = table.get(curState.name).get(curToken.name);");
 		out.println();				
-		out.println("        if (newrule == null) throw new Exception(\"Token \\\"\" + curToken.name + \"\\\" does not exist for rule \\\"\" + curState.name + \"\\\"\");");
+		out.println("        if (newrule == null) {");
+		out.println("          throw new ParserException(\"Invalid token \\\"\" + curToken.name + \"\\\" for rule \\\"\" + curState.name + \"\\\"\");");
+		out.println("        }");
 		out.println();
 		out.println("        if (!newrule.subrule) {");
 		out.println("          if (parseTree == null) {");
-		out.println("            curNode = parseTree = new " + node(startRuleName) + "(newrule.name, null, newrule.multi_child, null);");
+		out.println("            curNode = parseTree = new " + node(startRuleName) + "(newrule.name, null, newrule.multi_child);");
 		out.println("          } else {");
-		out.println("            ASTNode newnode = makenode(newrule.name, null, newrule.multi_child, curNode);");
+		out.println("            ASTNode newnode = makenode(newrule.name, null, newrule.multi_child);");
 		out.println("            curNode.addChild(newnode);");
 		out.println("            curNode = newnode;");
 		out.println("          }");
@@ -137,10 +145,11 @@ public class ParserClassCreator {
 		out.println("        }");
 		out.println();
 		out.println("        for (int i = newrule.graph.length-1; i >= 0; i--) {");
-		out.println("          if (newrule.graph[i].type != GrammarState.EPSILON) {");
-		out.println("            stateStack.push(newrule.graph[i]);");
-		out.println("          }");
+		out.println("          stateStack.push(newrule.graph[i]);");
 		out.println("        }");
+		out.println("      }");
+		out.println("      else if (curState.type == GrammarState.EPSILON) {");
+		out.println("        continue; //do nothing");
 		out.println("      }");
 		out.println();				
 		out.println("    }");
@@ -156,15 +165,15 @@ public class ParserClassCreator {
 	 */
 	private void outputMakeNodeFunction(PrintWriter out) {
 		
-		out.println("  private ASTNode makenode(String rulename, String value, boolean multi_child, ASTNode parent) throws Exception {");
+		out.println("  private ASTNode makenode(String rulename, String value, boolean multi_child) {");
 		
 		for (String rulename : grammardef.getRuleNames()) {
 			if (grammardef.getRules(rulename).get(0).isSubrule()) continue;
 		
-			out.println("    if (rulename.equals(\"" + rulename + "\")) return new " + node(rulename) + "(rulename, value, multi_child, parent);");
+			out.println("    if (rulename.equals(\"" + rulename + "\")) return new " + node(rulename) + "(rulename, value, multi_child);");
 		}
 		
-		out.println("    throw new Exception(\"Unknown rule name \\\"\" + rulename + \"\\\"\");");
+		out.println("    throw new RuntimeException(\"Unknown rule name, cannot make node \\\"\" + rulename + \"\\\"\");");
 		
 		out.println("  }");
 		
