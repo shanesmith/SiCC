@@ -308,12 +308,14 @@ public class ssCC {
 		
 		out.println("public class " + classname + " extends Exception {");
 		out.println("  private static final long serialVersionUID = 1L;");
-		out.println("  private int lineNumber = -1;");
+		out.println("  private int lineNumber = -1, column = -1;");
 		out.println("  public " + classname + " (Throwable cause) { super(cause); }");
 		out.println("  public " + classname + " (String msg) { super(msg); }");
 		out.println("  public " + classname + " (String msg, int lineNumber) { super(msg); this.lineNumber = lineNumber; }");
+		out.println("  public " + classname + " (String msg, int lineNumber, int column) { this(msg, lineNumber); this.column = column; }");
 		out.println("  public int getLineNumber() { return lineNumber; }");
-		out.println("  public String toString() { return (lineNumber != -1 ? \"[line \" + lineNumber + \"]\" : \"\") + getMessage(); }");
+		out.println("  public int getColumn() { return column; }");
+		out.println("  public String toString() { return (lineNumber != -1 ? \"[line \" + lineNumber + (column != -1 ? \", col \" + column : \"\") + \"] \" : \"\") + getMessage(); }");
 		out.println("} // end " + classname);
 		
 		out.close();
@@ -328,7 +330,7 @@ public class ssCC {
 		out.println("public class " + classname + " extends " + extendsclass + " {");
 		out.println("  private static final long serialVersionUID = 1L;");
 		out.println("  private String value;");
-		out.println("  public " + classname + " (String value, int lineNumber) { super(\"No such token: \" + value, lineNumber); this.value = value; }");
+		out.println("  public " + classname + " (String value, int lineNumber, int column) { super(\"No such token: \" + value, lineNumber, column); this.value = value; }");
 		out.println("  public String getValue() { return value; }");
 		out.println("} // end " + classname);
 		
@@ -353,7 +355,13 @@ public class ssCC {
 		
 		out.println("public class " + classname + " extends Exception {");
 		out.println("  private static final long serialVersionUID = 1L;");
+		out.println("  private int lineNumber = -1, column = -1;");
 		out.println("  public " + classname + " (String msg) { super(msg); }");
+		out.println("  public " + classname + " (String msg, int lineNumber) { this(msg); this.lineNumber=lineNumber; }");
+		out.println("  public " + classname + " (String msg, int lineNumber, int column) { this(msg, lineNumber); this.column=column; }");
+		out.println("  public int getLineNumber() { return lineNumber; }");
+		out.println("  public int getColumn() { return column; }");
+		out.println("  public String toString() { return (lineNumber != -1 ? \"[line \" + lineNumber + (column != -1 ? \", col \" + column : \"\") + \"] \" : \"\") + getMessage(); }");
 		out.println("}");
 		
 		out.close();
@@ -371,9 +379,11 @@ public class ssCC {
 		out.println(" * A token returned by the tokenizer");
 		out.println(" */");
 		out.println("public class " + classname + " {");
-		out.println("  public int line=-1, type=0;");
+		out.println("  public int line = -1, column = -1, type = 0;");
 		out.println("  public String name, value;");
+		out.println("  public " + classname + " (int t, String n, String v, int l, int c) { type=t; name=n; value=v; line=l; column=c; }");
 		out.println("  public " + classname + " (int t, String n, String v, int l) { type=t; name=n; value=v; line=l; }");
+		out.println("  public " + classname + " (String n, String v, int l, int c) { name=n; value=v; line=l; column=c; }");
 		out.println("  public " + classname + " (String n, String v, int l) { name=n; value=v; line=l; }");
 		out.println("  public " + classname + " (String n, String v) { name=n; value=v; }");
 		out.println("  public " + classname + " (String n) { name=n; }");

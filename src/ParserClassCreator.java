@@ -102,7 +102,10 @@ public class ParserClassCreator {
 		out.println("        if (curNode.isMultiChild() && curNode.numChildren() == 1) {");
 		out.println("          ASTNode parentNode = curNode.getParent();");
 		out.println("          parentNode.removeChild(curNode);");
-		out.println("          parentNode.addChild( curNode.getChildren().firstElement() );");
+		out.println();
+		out.println("          ASTNode childNode = curNode.getChild(0);");
+		out.println("          curNode.removeChild(childNode);");
+		out.println("          parentNode.addChild(childNode);");
 		out.println("        }");
 		out.println("        else if (curNode.numChildren() == 0) {");
 		out.println("          curNode.getParent().removeChild(curNode);");
@@ -114,7 +117,7 @@ public class ParserClassCreator {
 		out.println("      else if (curState.type == GrammarState.TOKEN) {");
 		out.println();
 		out.println("        if (!curState.name.equals(curToken.name)) {");
-		out.println("          throw new ParserException(\"Expected token \\\"\" + curState.name + \"\\\" but received \\\"\" + curToken.name + \"\\\"\");");
+		out.println("          throw new ParserException(\"Invalid token \\\"\" + curToken.value + \"\\\" (\" + curToken.name + \"), expected token (\" + curState.name + \")\"	, curToken.line, curToken.column);");
 		out.println("        }");
 		out.println();
 		out.println("        if (curToken.name.equals(\"eof\")) break;");
@@ -129,7 +132,9 @@ public class ParserClassCreator {
 		out.println("        GrammarRule newrule = table.get(curState.name).get(curToken.name);");
 		out.println();				
 		out.println("        if (newrule == null) {");
-		out.println("          throw new ParserException(\"Invalid token \\\"\" + curToken.name + \"\\\" for rule \\\"\" + curState.name + \"\\\"\");");
+		out.println("          String expected = \"\";");
+		out.println("          for (String t : table.get(curState.name).keySet()) if (t != null) expected += t + \", \";");
+		out.println("          throw new ParserException(\"Invalid token \\\"\" + curToken.value + \"\\\" (\" + curToken.name + \") for rule \\\"\" + curState.name.replaceAll(\"\\\\{.*\", \"\") + \"\\\", expected one of (\" + expected.substring(0, expected.length()-2) + \")\", curToken.line, curToken.column);");
 		out.println("        }");
 		out.println();
 		out.println("        if (!newrule.subrule) {");
