@@ -2,8 +2,6 @@
 /**
  * Exception thrown by ssCC's argument parser
  * when invalid arguments are provided.
- * 
- * @see ssCC(String[] args)
  */
 public class ArgumentParsingException extends Exception {
 
