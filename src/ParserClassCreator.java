@@ -32,7 +32,6 @@ public class ParserClassCreator {
 	public void output(PrintWriter out) {
 		
 		String classname = prefix + "Parser";
-		String tokenizername = prefix + "Tokenizer";
 		String startRuleName = grammardef.getStartRuleName();
 		
 		out.println("import java.util.HashMap;");
@@ -43,12 +42,12 @@ public class ParserClassCreator {
 		
 		out.println("  private static final String startRuleName = \"" + startRuleName + "\";");
 		out.println();
-		out.println("  private " + tokenizername + " tokenizer;");
+		out.println("  private iTokenizer tokenizer;");
 		out.println();
 		out.println("  private HashMap<String, HashMap<String, GrammarRule>> table = new HashMap<String, HashMap<String, GrammarRule>>();");
 		out.println();
 		
-		out.println("  public " + classname + " (" + tokenizername + " tokenizer) { this.tokenizer = tokenizer; buildTable(); }");
+		out.println("  public " + classname + " (iTokenizer tokenizer) { this.tokenizer = tokenizer; buildTable(); }");
 		out.println();
 		
 		outputParseFunction(out, startRuleName);

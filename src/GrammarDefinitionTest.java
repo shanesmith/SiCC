@@ -5,7 +5,7 @@ public class GrammarDefinitionTest {
 	
 	public static final String[] definitions = {
 	
-		/*"tok",			// Rule seperator -> not found after rule name
+		"tok",			// Rule seperator -> not found after rule name
 		"-> tok",		// Rule does not begin with a valid ID
 		"9Rule -> def", // Rule does not begin with a valid ID
 		"Ru le -> def", // Rule seperator (->) not found after rule name
@@ -35,7 +35,7 @@ public class GrammarDefinitionTest {
 		"A -> B b \n B -> A c", // Left recursion detected at rule "A"
 		"A -> c d | c e",		// Ambiguous grammar detected at rule "A" with token "c"
 		"S -> i E t S | i E t S e S \n E -> a",				// Ambiguous grammar detected at rule "S" with token "i"
-		"S -> i E t S R | a \n R -> e S | \\0 \n E -> b",	// Ambiguous grammar detected at rule "R" with token "e"*/
+		"S -> i E t S R | a \n R -> e S | \\0 \n E -> b",	// Ambiguous grammar detected at rule "R" with token "e"
 		
 		"E -> T EP \n EP -> add T EP | \\0 \n T -> F TP \n TP -> multiply F TP | \\0 \n F -> ( E ) | number",
 		

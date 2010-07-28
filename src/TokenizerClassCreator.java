@@ -144,7 +144,7 @@ public class TokenizerClassCreator {
 		out.println("    if (tokenHistoryIT.hasPrevious()) {");
 		out.println("      tokenHistoryIT.previous();");
 		out.println("    } else {");
-		out.println("      throw new TokenizerException(\"Token push limit (\" + tokenHistorySize + \") reached.\");");
+		out.println("      throw new TokenizerException(\"Token push limit (\" + tokenHistorySize + \") exceeded.\");");
 		out.println("    }");
 		out.println("  } // end pushToken");
 		out.println();

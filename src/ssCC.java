@@ -273,11 +273,11 @@ public class ssCC {
 		// needed always
 		createTokenClass();
 		createTokenizerInterface();
+		createTokenizerExceptionClass();
 		
 		// create Tokenizer if token definition is set
 		if (tokendef != null) {
 			createTokenizerClass();
-			createTokenizerExceptionClass();
 			createNoSuchTokenExceptionClass();
 		}
 		
@@ -383,6 +383,7 @@ public class ssCC {
 		out.println("  public String name, value;");
 		out.println("  public " + classname + " (int t, String n, String v, int l, int c) { type=t; name=n; value=v; line=l; column=c; }");
 		out.println("  public " + classname + " (int t, String n, String v, int l) { type=t; name=n; value=v; line=l; }");
+		out.println("  public " + classname + " (int t, String n, String v) { type=t; name=n; value=v; }");
 		out.println("  public " + classname + " (String n, String v, int l, int c) { name=n; value=v; line=l; column=c; }");
 		out.println("  public " + classname + " (String n, String v, int l) { name=n; value=v; line=l; }");
 		out.println("  public " + classname + " (String n, String v) { name=n; value=v; }");
@@ -440,7 +441,7 @@ public class ssCC {
 		
 		out.println("public interface " + interfacename + "{");
 		
-		out.println("  public " + tokenclassname + " nextToken() throws Exception;");
+		out.println("  public " + tokenclassname + " nextToken();");
 		
 		out.println("} // end " + interfacename);
 		
