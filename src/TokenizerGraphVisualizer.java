@@ -23,6 +23,8 @@ import edu.uci.ics.jung.visualization.VisualizationImageServer;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
 
+//TODO create new ssCCVertexRenderer class based on BasicVertexRenderer with ability to double-line shapes (might also need new RenderContext with new VertexDrawMultiLinesTransformer)
+
 public class TokenizerGraphVisualizer {
 
 	private String[] myVertices = {
