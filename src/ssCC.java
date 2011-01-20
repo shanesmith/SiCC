@@ -412,23 +412,24 @@ public class ssCC {
 		String interfacename = prefix + "Visitor";
 		
 		PrintWriter out = getWriter(interfacename + ".java");
+		interfacename += "<X,Y>";
 		
 		out.println("/**");
 		out.println(" * An interface to implement in order to traverse the resulting parse tree");
 		out.println(" */");
 		out.println("public interface " + interfacename + " {");
 		
-		out.println("  public Object visit(" + prefix + "ASTNode node, Object data);"); // base node
+		out.println("  public X visit(" + prefix + "ASTNode node, Y data);"); // base node
 		
 		// for each rule (except sub-rules) output a visit method
 		for (String rulename : grammardef.getRuleNames()) {
 			if (!grammardef.getRules(rulename).get(0).isSubrule()) {
 				String classname = prefix + "AST" + rulename + "Node";
-				out.println("  public Object visit(" + classname + " node, Object data);");
+				out.println("  public X visit(" + classname + " node, Y data);");
 			}
 		}
 		String classname = prefix + "ASTToken";
-		out.println("  public Object visit(" + classname + " node, Object data);");
+		out.println("  public X visit(" + classname + " node, Y data);");
 		
 		out.println("} // end " + interfacename);
 		
@@ -470,7 +471,7 @@ public class ssCC {
 	 */
 	private void createASTNodeSuperClass() throws IOException {
 		String classname = prefix + "ASTNode";
-		String visitorname = prefix + "Visitor";
+		String visitorname = prefix + "Visitor<X,Y>";
 		
 		PrintWriter out = getWriter(classname + ".java");
 		
@@ -491,8 +492,7 @@ public class ssCC {
 		out.println("  public String getName() { return name; }"); out.println();
 		out.println("  public String getValue() { return value; }"); out.println();
 		out.println("  public ASTNode getParent() { return parent; }"); out.println();
-		out.println("  public Object accept(" + visitorname + " visitor, Object data) { return visitor.visit(this, data); }"); out.println();
-		out.println("  public Object childrenAccept(" + visitorname + " visitor, Object data) { for(ASTNode node : children) node.accept(visitor, data); return data; }"); out.println();
+		out.println("  public <X,Y> X accept(" + visitorname + " visitor, Y data) { return visitor.visit(this, data); }"); out.println();
 		out.println("  public String toString() { if (value == null || value.isEmpty()) { return name; } else { return name + \" => \" + value; } }"); out.println();
 		out.println("} // end " + classname);
 		
@@ -507,7 +507,7 @@ public class ssCC {
 		String classname;
 		
 		String extendname = prefix + "ASTNode";
-		String visitorname = prefix + "Visitor";
+		String visitorname = prefix + "Visitor<X,Y>";
 		
 		PrintWriter out;
 		
@@ -521,7 +521,7 @@ public class ssCC {
 			
 			out.println("public class " + classname + " extends " + extendname + " {");
 			out.println("  public " + classname + " (String n, String v, boolean m) { super(n,v,m); }");
-			out.println("  public Object accept(" + visitorname + " visitor, Object data) { return visitor.visit(this, data); }");
+			out.println("  public <X,Y> X accept(" + visitorname + " visitor, Y data) { return visitor.visit(this, data); }"); out.println();
 			out.println("} // end " + classname);
 			
 			out.close();
@@ -535,7 +535,7 @@ public class ssCC {
 		
 		out.println("public class " + classname + " extends " + extendname + " {");
 		out.println("  public " + classname + " (String n, String v) { super(n,v,false); }" );
-		out.println("  public Object accept(" + visitorname + " visitor, Object data) { return visitor.visit(this, data); }");
+		out.println("  public <X,Y> X accept(" + visitorname + " visitor, Y data) { return visitor.visit(this, data); }"); out.println();
 		out.println("}");
 		
 		out.close();
