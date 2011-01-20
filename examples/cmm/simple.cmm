@@ -1,0 +1,4 @@
+boolean gt(number a, number b) {
+  return  a > b;
+}
+
