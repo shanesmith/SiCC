@@ -56,6 +56,13 @@
 
 import java.io.*;
 
+/**
+ * Shane Smith's Compiler Compiler
+ * @author shane
+ * TODO: Fix, or verify, the prefix feature
+ * TODO: Use JCF collections
+ * TODO: Make Visitor class generic
+ */
 public class ssCC {
 
 	/**
@@ -436,12 +443,13 @@ public class ssCC {
 		
 		String interfacename = prefix + "iTokenizer";
 		String tokenclassname = prefix + "Token";
+		String exceptionname = prefix + "TokenizerException";
 		
 		PrintWriter out = getWriter(interfacename + ".java");
 		
 		out.println("public interface " + interfacename + "{");
 		
-		out.println("  public " + tokenclassname + " nextToken();");
+		out.println("  public " + tokenclassname + " nextToken() throws " + exceptionname + ";");
 		
 		out.println("} // end " + interfacename);
 		
