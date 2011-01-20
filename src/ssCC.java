@@ -507,6 +507,7 @@ public class ssCC {
 		String classname;
 		
 		String extendname = prefix + "ASTNode";
+		String visitorname = prefix + "Visitor";
 		
 		PrintWriter out;
 		
@@ -520,6 +521,7 @@ public class ssCC {
 			
 			out.println("public class " + classname + " extends " + extendname + " {");
 			out.println("  public " + classname + " (String n, String v, boolean m) { super(n,v,m); }");
+			out.println("  public Object accept(" + visitorname + " visitor, Object data) { return visitor.visit(this, data); }");
 			out.println("} // end " + classname);
 			
 			out.close();
