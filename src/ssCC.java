@@ -422,13 +422,13 @@ public class ssCC {
 		
 		// for each rule (except sub-rules) output a visit method
 		for (String rulename : grammardef.getRuleNames()) {
-			if (grammardef.getRules(rulename).get(0).isSubrule()) continue;
-		
-			String classname = prefix + "AST" + rulename + "Node";
-			
-			out.println("  public Object visit(" + classname + " node, Object data);");
-			
+			if (!grammardef.getRules(rulename).get(0).isSubrule()) {
+				String classname = prefix + "AST" + rulename + "Node";
+				out.println("  public Object visit(" + classname + " node, Object data);");
+			}
 		}
+		String classname = prefix + "ASTToken";
+		out.println("  public Object visit(" + classname + " node, Object data);");
 		
 		out.println("} // end " + interfacename);
 		
@@ -535,6 +535,7 @@ public class ssCC {
 		
 		out.println("public class " + classname + " extends " + extendname + " {");
 		out.println("  public " + classname + " (String n, String v) { super(n,v,false); }" );
+		out.println("  public Object accept(" + visitorname + " visitor, Object data) { return visitor.visit(this, data); }");
 		out.println("}");
 		
 		out.close();
