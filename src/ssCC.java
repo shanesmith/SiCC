@@ -478,20 +478,20 @@ public class ssCC {
 		out.println("import java.util.Vector;");
 		out.println();
 		out.println("public class " + classname + " {"); out.println();
-		out.println("  private ASTNode parent;"); out.println();
-		out.println("  private Vector<ASTNode> children = new Vector<ASTNode>();"); out.println();
+		out.println("  private " + prefix + "ASTNode parent;"); out.println();
+		out.println("  private Vector<" + prefix + "ASTNode> children = new Vector<" + prefix + "ASTNode>();"); out.println();
 		out.println("  private String name, value;"); out.println();
 		out.println("  private boolean multi_child;"); out.println();
 		out.println("  public " + classname + " (String n, String v, boolean m) { name=n; value=v; multi_child=m; }"); out.println();
 		out.println("  public boolean isMultiChild() { return multi_child; }"); out.println();
-		out.println("  public void addChild(ASTNode node) { if (node.parent != null) throw new RuntimeException(\"Node already has parent, can't add as child\");  children.add(node); node.parent = this; }"); out.println();
-		out.println("  public void removeChild(ASTNode node) { children.remove(node); node.parent = null; }"); out.println();
-		out.println("  public Vector<ASTNode> getChildren() { return children; }"); out.println();
-		out.println("  public ASTNode getChild(int i) { return children.get(i); }"); out.println();
+		out.println("  public void addChild(" + prefix + "ASTNode node) { if (node.parent != null) throw new RuntimeException(\"Node already has parent, can't add as child\");  children.add(node); node.parent = this; }"); out.println();
+		out.println("  public void removeChild(" + prefix + "ASTNode node) { children.remove(node); node.parent = null; }"); out.println();
+		out.println("  public Vector<" + prefix + "ASTNode> getChildren() { return children; }"); out.println();
+		out.println("  public " + prefix + "ASTNode getChild(int i) { return children.get(i); }"); out.println();
 		out.println("  public int numChildren() { return children.size(); }"); out.println();
 		out.println("  public String getName() { return name; }"); out.println();
 		out.println("  public String getValue() { return value; }"); out.println();
-		out.println("  public ASTNode getParent() { return parent; }"); out.println();
+		out.println("  public " + prefix + "ASTNode getParent() { return parent; }"); out.println();
 		out.println("  public <X,Y> X accept(" + visitorname + " visitor, Y data) { return visitor.visit(this, data); }"); out.println();
 		out.println("  public String toString() { if (value == null || value.isEmpty()) { return name; } else { return name + \" => \" + value; } }"); out.println();
 		out.println("} // end " + classname);
@@ -573,37 +573,4 @@ public class ssCC {
 		
 		return out;
 	}
-	
-	/**
-	 * Test run the token definition on a reader object.
-	 * TokenizerRunner is a modified implementation of the Tokenizer class outputed by ssCC.
-	 */
-	/*
-	public void runTokenizer(Reader reader) throws Exception {
-		Token tok;
-		
-		TokenizerRunner runner = new TokenizerRunner(tokendef, reader);
-		
-		while ( (tok=runner.nextToken()) != null ) {
-			System.out.println(tok);
-		}
-		
-	}
-	*/
-	
-	/**
-	 * Test run the grammar definition on a reader object (which gets fed into a TokenizerRunner).
-	 * GrammarRunner is a modified implementation of the Parse class outputed by ssCC. 
-	 */
-	/*
-	public void runGrammar(Reader reader) throws Exception {
-		
-		GrammarRunner runner = new GrammarRunner(grammardef, new TokenizerRunner(tokendef, reader));
-		
-		ASTNode parseTree = runner.run();
-		
-		System.out.println(parseTree);
-	}
-	*/
-	
 }

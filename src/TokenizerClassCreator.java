@@ -93,7 +93,7 @@ public class TokenizerClassCreator {
 		out.println("  public int getLineNumber() { return input.getLineNumber(); }");
 		out.println();
 		
-		out.println("  public " + tokclass + " nextToken() throws TokenizerException {");
+		out.println("  public " + tokclass + " nextToken() throws " + prefix + "TokenizerException {");
 		out.println("    if (tokenHistoryIT.hasNext()) {");
 		out.println("      return tokenHistoryIT.next();");
 		out.println("    } else {");
@@ -108,7 +108,7 @@ public class TokenizerClassCreator {
 		out.println("  } // end nextToken");
 		out.println();
 		
-		out.println("  private " + tokclass + " _nextToken() throws TokenizerException {");
+		out.println("  private " + tokclass + " _nextToken() throws " + prefix + "TokenizerException {");
 		out.println("    int c;");
 		out.println("    String value;");
 		out.println("    int curState;");
@@ -134,17 +134,17 @@ public class TokenizerClassCreator {
 		out.println("        return createToken(accepting.get(curState), value, lineNumber, column);");
 		out.println("      } else {");
 		out.println("        value += (char)c;");
-		out.println("        throw new NoSuchTokenException(value, lineNumber, column);");
+		out.println("        throw new " + prefix + "NoSuchTokenException(value, lineNumber, column);");
 		out.println("      }");
 		out.println("    }");
 		out.println("  } // end _nextToken");
 		out.println();
 		
-		out.println("  public void pushToken() throws TokenizerException {");
+		out.println("  public void pushToken() throws " + prefix + "TokenizerException {");
 		out.println("    if (tokenHistoryIT.hasPrevious()) {");
 		out.println("      tokenHistoryIT.previous();");
 		out.println("    } else {");
-		out.println("      throw new TokenizerException(\"Token push limit (\" + tokenHistorySize + \") exceeded.\");");
+		out.println("      throw new " + prefix + "TokenizerException(\"Token push limit (\" + tokenHistorySize + \") exceeded.\");");
 		out.println("    }");
 		out.println("  } // end pushToken");
 		out.println();
@@ -176,7 +176,7 @@ public class TokenizerClassCreator {
 		out.println("  }");
 		out.println();
 		
-		out.println("  private int getChar() throws TokenizerException {");
+		out.println("  private int getChar() throws " + prefix + "TokenizerException {");
 		out.println("    int c; int startLine = getLineNumber();");
 		out.println("    if (!pushedChars.empty()) {");
 		out.println("      c = pushedChars.pop();");
@@ -186,7 +186,7 @@ public class TokenizerClassCreator {
 		out.println("        c = input.read();");
 		out.println("      }");
 		out.println("      catch (IOException ex) {");
-		out.println("        throw new TokenizerException(ex);");
+		out.println("        throw new " + prefix + "TokenizerException(ex);");
 		out.println("      }");
 		out.println("    }");
 		out.println("    if (getLineNumber() > startLine) { currentColumn = 1; } else { currentColumn++; }");
