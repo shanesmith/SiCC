@@ -19,12 +19,6 @@ public class CMMInterpreterVisitor implements
 	}
 
 	@Override
-	public CMMData visit(CMMASTPrefixUnaryNode node, CMMEnvironment data) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public CMMData visit(CMMASTNumberConstantNode node, CMMEnvironment data) {
 		return visitChildren(node, data);
 	}
@@ -35,9 +29,27 @@ public class CMMInterpreterVisitor implements
 		return null;
 	}
 
-	@Override
+	// Sum -> Term ((plus|minus) Term)*  [>1]
 	public CMMData visit(CMMASTSumNode node, CMMEnvironment data) {
-		return visitChildren(node, data);
+		CMMData x = node.getChild(0).accept(this, data);
+		if (!(x instanceof CMMNumber)) {
+			throw new RuntimeException("Invalid operand to numerical operator +/-");
+		}
+		CMMNumber a = (CMMNumber)x;
+		for (int i = 1; i < node.numChildren(); i += 2) {
+			CMMData y = node.getChild(i+1).accept(this, data);
+			String op = node.getChild(i).getName();
+			if (!(y instanceof CMMNumber)) {
+				throw new RuntimeException("Invalid operand to numerical operator +/-");
+			}
+			CMMNumber b = (CMMNumber)y;
+			if (op.equals("plus")) {
+				a = new CMMNumber(a.value() + b.value());
+			} else if (op.equals("minus")) {
+				a = new CMMNumber(a.value() - b.value());
+			}
+		}
+		return a;
 	}
 
 	@Override
@@ -50,9 +62,27 @@ public class CMMInterpreterVisitor implements
 		return visitChildren(node, data);
 	}
 
-	@Override
+	// Logical -> Comparison ((and|or) Comparison)*  [>1]
 	public CMMData visit(CMMASTLogicalNode node, CMMEnvironment data) {
-		return visitChildren(node, data);
+		CMMData x = node.getChild(0).accept(this, data);
+		if (!(x instanceof CMMBoolean)) {
+			throw new RuntimeException("Invalid operand to logical operator");
+		}
+		CMMBoolean a = (CMMBoolean)x;
+		for (int i = 1; i < node.numChildren(); i += 2) {
+			CMMData y = node.getChild(i+1).accept(this, data);
+			String op = node.getChild(i).getName();
+			if (!(y instanceof CMMBoolean)) {
+				throw new RuntimeException("Invalid operand to logical operator");
+			}
+			CMMBoolean b = (CMMBoolean)y;
+			if (op.equals("and")) {
+				a = new CMMBoolean(a.value() && b.value());
+			} else if (op.equals("or")) {
+				a = new CMMBoolean(a.value() || b.value());
+			}
+		}
+		return a;
 	}
 
 	@Override
@@ -67,18 +97,6 @@ public class CMMInterpreterVisitor implements
 	}
 
 	@Override
-	public CMMData visit(CMMASTPrefixUnaryOpNode node, CMMEnvironment data) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public CMMData visit(CMMASTUnaryNode node, CMMEnvironment data) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public CMMData visit(CMMASTElementNode node, CMMEnvironment data) {
 		return visitChildren(node, data);
 	}
@@ -88,14 +106,30 @@ public class CMMInterpreterVisitor implements
 		return visitChildren(node, data);
 	}
 
-	@Override
+	// Comparison -> Sum ((lt|gt|eq|le|ge|ne) Sum)?  [>1]
 	public CMMData visit(CMMASTComparisonNode node, CMMEnvironment data) {
-		return visitChildren(node, data);
-	}
-
-	@Override
-	public CMMData visit(CMMASTPostfixUnaryOpNode node, CMMEnvironment data) {
-		throw new UnsupportedOperationException();
+		CMMData x = node.getChild(0).accept(this, data);
+		CMMData y = node.getChild(2).accept(this, data);
+		if (!(x instanceof CMMNumber) || !(y instanceof CMMNumber)) {
+			throw new RuntimeException("Invalid operand to comparison operator");
+		}
+		CMMNumber a = (CMMNumber)x;
+		CMMNumber b = (CMMNumber)y;
+		String op = node.getChild(1).getName();
+		if (op.equals("lt")) {
+			return new CMMBoolean(a.value < b.value);
+		} else if (op.equals("gt")) {
+			return new CMMBoolean(a.value > b.value);
+		} else if (op.equals("le")) {
+			return new CMMBoolean(a.value <= b.value);
+		} else if (op.equals("ge")) {
+			return new CMMBoolean(a.value >= b.value);
+		} else if (op.equals("eq")) {
+			return new CMMBoolean(a.value == b.value);
+		} else if (op.equals("ne")) {
+			return new CMMBoolean(a.value != b.value);
+		}
+		return null;
 	}
 
 	@Override
@@ -103,9 +137,29 @@ public class CMMInterpreterVisitor implements
 		return visitChildren(node, data);
 	}
 
-	@Override
+	// Term -> Exp ((multiply|divide|mod) Exp)* [>1]
 	public CMMData visit(CMMASTTermNode node, CMMEnvironment data) {
-		return visitChildren(node, data);
+		CMMData x = node.getChild(0).accept(this, data);
+		if (!(x instanceof CMMNumber)) {
+			throw new RuntimeException("Invalid operand to numerical operator +/-");
+		}
+		CMMNumber a = (CMMNumber)x;
+		for (int i = 1; i < node.numChildren(); i += 2) {
+			CMMData y = node.getChild(i+1).accept(this, data);
+			String op = node.getChild(i).getName();
+			if (!(y instanceof CMMNumber)) {
+				throw new RuntimeException("Invalid operand to numerical operator +/-");
+			}
+			CMMNumber b = (CMMNumber)y;
+			if (op.equals("multiply")) {
+				a = new CMMNumber(a.value() * b.value());
+			} else if (op.equals("divide")) {
+				a = new CMMNumber(a.value() / b.value());
+			} else if (op.equals("mod")) {
+				a = new CMMNumber(a.value() % b.value());
+			}
+		}
+		return a;
 	}
 
 	@Override

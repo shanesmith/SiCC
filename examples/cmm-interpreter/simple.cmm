@@ -3,6 +3,6 @@ boolean gt(number a, number b) {
 }
 
 number main() {
-  2;
+  2 + 2 - 1 + 127 > 10;
 }
 
