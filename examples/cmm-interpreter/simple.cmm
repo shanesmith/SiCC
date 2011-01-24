@@ -2,3 +2,7 @@ boolean gt(number a, number b) {
   return  a > b;
 }
 
+number main() {
+  2;
+}
+
