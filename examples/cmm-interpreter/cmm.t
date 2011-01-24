@@ -48,6 +48,7 @@ lt: <
 gt: >
 le: <=
 ge: >=
+ne: != | <>
 gets: =
 
 # keywords
@@ -67,8 +68,7 @@ boolean_t: boolean
 number: :float: | :float: [eE] [-\+]? :integer:?
 
 # boolean constants
-true: true
-false: false
+boolean: true | false
 
 # identifiers
 :letter: [ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_]

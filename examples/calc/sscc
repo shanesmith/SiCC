@@ -1,4 +1,4 @@
 #!/bin/bash
 
-java -cp ../../src ssCC $*
+java -cp ../../src/ssCC.jar ssCC $*
 

@@ -22,19 +22,22 @@ public class CMM {
 				System.exit(-1);
 			}
 		}
-		Tokenizer t = new Tokenizer(r);
-		Parser p = new Parser(t);
-		ASTNode n = null;
+		CMMTokenizer t = new CMMTokenizer(r);
+		CMMParser p = new CMMParser(t);
+		CMMASTNode n = null;
 		try {
 			n = p.parse();
-		} catch (TokenizerException e) {
+		} catch (CMMTokenizerException e) {
 			System.err.println("A tokenizer exception occured:" + e);
 			System.exit(-1);
-		} catch (ParserException e) {
+		} catch (CMMParserException e) {
 			System.err.println("A parse exception occured:" + e);
 			System.exit(-1);
 		}
-		System.out.println("Input was successfully parsed");
+		System.out.println(n);
+		CMMInterpreterVisitor v = new CMMInterpreterVisitor();
+		CMMData res = n.accept(v, null);
+		System.out.println(res);
 	}
 
 }

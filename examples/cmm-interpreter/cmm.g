@@ -1,10 +1,10 @@
 Program -> FunctionDefinition*
 
-FunctionDefinition -> Type Identifier lparen ParameterList rparen Block
+FunctionDefinition -> Type id ParameterList Block
 
-ParameterList -> (Parameter (listsep Parameter)*)?
+ParameterList -> lparen (Parameter (listsep Parameter)*)? rparen
 
-Parameter -> Type Identifier
+Parameter -> Type id
 
 Block -> bb ExpressionList be
 
@@ -12,11 +12,9 @@ ExpressionList -> Statement*
 
 Statement -> Declaration | ReturnStatement | WhileLoop | DoLoop | IfStatement | SimpleStatement
 
-Declaration -> Type Identifier (listsep Identifier)* eol
+Declaration -> Type id (listsep Identifier)* eol
 
 Type -> number_t | string_t | boolean_t 
-
-Identifier -> id
 
 ReturnStatement -> return Logical eol
 
@@ -47,7 +45,7 @@ PostfixUnaryOp -> inc|dec
 Constant -> StringConstant | BooleanConstant | NumberConstant
 
 StringConstant -> string
-BooleanConstant -> true | false
+BooleanConstant -> boolean
 NumberConstant -> number
 
 ArgumentList -> lparen (Assignment (listsep Assignment)*)? rparen
