@@ -38,10 +38,6 @@ divide: /
 mod: %
 exp: \^
 
-# unary operators
-inc: --
-dec: \+\+
-
 # comparison operators
 eq: ==
 lt: <
@@ -62,10 +58,13 @@ number_t: number
 string_t: string
 boolean_t: boolean
 
+# string constants
+string: "([^"]|\\")*"
+
 # numeric constants
 :integer: [0123456789]+
 :float: :integer: (\.:integer:)? | \.:integer:
-number: :float: | :float: [eE] [-\+]? :integer:?
+number: -? :float: | :float: [eE] [-\+]? :integer:?
 
 # boolean constants
 boolean: true | false

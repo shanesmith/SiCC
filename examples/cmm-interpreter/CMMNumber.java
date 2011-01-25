@@ -9,4 +9,8 @@ public class CMMNumber extends CMMData {
 	public double value() {
 		return value;
 	}
+	
+	public String toString() {
+		return Double.toString(value);
+	}
 }

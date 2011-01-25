@@ -9,4 +9,8 @@ public class CMMBoolean extends CMMData {
 	public boolean value() {
 		return value;
 	}
+	
+	public String toString() {
+		return Boolean.toString(value);
+	}
 }

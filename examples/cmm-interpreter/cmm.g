@@ -31,16 +31,12 @@ SimpleStatement -> Assignment eol
 Assignment -> Logical (gets Logical)?
 
 Logical -> Comparison ((and|or) Comparison)*  [>1]
-Comparison -> Sum ((lt|gt|eq|le|ge) Sum)*  [>1]
+Comparison -> Sum ((lt|gt|eq|le|ge|ne) Sum)?  [>1]
 Sum -> Term ((plus|minus) Term)*  [>1]
 Term -> Exp ((multiply|divide|mod) Exp)* [>1]  
-Exp -> Unary (exp Unary)*  [>1] 
-Unary -> PrefixUnary | Element [>1] 
-PrefixUnary -> PrefixUnaryOp Element
-PrefixUnaryOp -> inc|dec|minus
+Exp -> Element (exp Element)*  [>1] 
 Element -> Constant | lparen Logical rparen | ElementPlus
-ElementPlus -> id (PostfixUnaryOp | ArgumentList)?
-PostfixUnaryOp -> inc|dec
+ElementPlus -> id ArgumentList?
 
 Constant -> StringConstant | BooleanConstant | NumberConstant
 

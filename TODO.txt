@@ -1,0 +1,6 @@
+Some nice features to add:
+
+- Add line number information to all nodes in parse tree
+- Add a tool for generating Visitor classes
+  - should implement a trivial "visit all visitor"
+  - comments should include the grammar rules for that node
