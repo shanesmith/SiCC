@@ -142,27 +142,40 @@ public class GrammarRule {
 		
 		Vector<String> first = new Vector<String>();
 		
-		GrammarState firststate = getNonEpsilonNext(graph.iterator());
+		Iterator<GrammarState> iterator = graph.iterator();
 		
-		if (firststate != null) {
-		
-			if (firststate.type == GrammarState.RULE) {
-				// state is a rule, at FIRST of that rule
+		// loop through the states
+		while (true) {
+			GrammarState state = getNonEpsilonNext(iterator);
+			
+			if (state == null) {
+				// end of graph, add epsilon rule and break the loop
+				first.add(null);
+				break;	
+			}
+			else if (state.type == GrammarState.RULE) {
+				// state is a rule, add FIRST of that rule
 				path.add(name);
-				for (GrammarRule rule : grammardef.getRules(firststate.name)) {
+				for (GrammarRule rule : grammardef.getRules(state.name)) {
 					first.addAll( rule._first(path) );
 				}
 				path.remove(name);
+				
+				// if the latest state contains epsilon, 
+				// remove it and let the loop continue to add first of next state,
+				// otherwise we are done
+				if (first.contains(null)) {
+					while(first.remove(null));
+				} else {
+					break;
+				}
+				
 			}
-			else if (firststate.type == GrammarState.TOKEN) {
-				// state is a token (terminal), simply add to first
-				first.add(firststate.name);
+			else if (state.type == GrammarState.TOKEN) {
+				// state is a token (terminal), add it to first and break the loop
+				first.add(state.name);
+				break;
 			}
-			
-		} else {
-			// end of graph, simply an epsilon rule
-			
-			first.add(null);
 			
 		}
 		
