@@ -1,6 +1,6 @@
 
 import java.util.ListIterator;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * Base class for NFA and DFA state classes
@@ -28,7 +28,7 @@ public abstract class TokenizerState {
 	protected boolean accepting = false;
 	
 	
-	private Vector<TokenDFA> owners = new Vector<TokenDFA>();
+	private ArrayList<TokenDFA> owners = new ArrayList<TokenDFA>();
 	
 	/**
 	 * Constructor.
@@ -69,14 +69,14 @@ public abstract class TokenizerState {
 	/**
 	 * Add all the given owners to this state
 	 */
-	public void addOwners(Vector<TokenDFA> owners) {
+	public void addOwners(ArrayList<TokenDFA> owners) {
 		// use addOwner instead of owners.addAll because of special handling
 		for (TokenDFA o : owners) {
 			addOwner(o);
 		}
 	}
 	
-	public Vector<TokenDFA> getOwners() { return owners; }
+	public ArrayList<TokenDFA> getOwners() { return owners; }
 
 	/**
 	 * Reset the next id (ex: for new graph)

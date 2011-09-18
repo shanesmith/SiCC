@@ -1,7 +1,7 @@
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Set;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * A state to be used in a NFA for a tokenizer.
@@ -13,7 +13,7 @@ public class TokenizerNFAState extends TokenizerState {
 	/**
 	 * A map from characters to states (null key denotes an epsilon transition)
 	 */
-	private HashMap<Character, Vector<TokenizerNFAState>> transitions = new HashMap<Character, Vector<TokenizerNFAState>>();
+	private HashMap<Character, ArrayList<TokenizerNFAState>> transitions = new HashMap<Character, ArrayList<TokenizerNFAState>>();
 	
 	/**
 	 * Constructor.
@@ -25,7 +25,7 @@ public class TokenizerNFAState extends TokenizerState {
 	 */
 	public void addTransition(Character c, TokenizerNFAState next) { 
 		if (!transitions.containsKey(c)) {
-			transitions.put(c, new Vector<TokenizerNFAState>());
+			transitions.put(c, new ArrayList<TokenizerNFAState>());
 		}
 		
 		transitions.get(c).add(next);
@@ -38,8 +38,8 @@ public class TokenizerNFAState extends TokenizerState {
 	/**
 	 * Return attainable states on the given character
 	 */
-	public Vector<TokenizerNFAState> getTransitions(Character c) {
-		Vector<TokenizerNFAState> trans = new Vector<TokenizerNFAState>(); 
+	public ArrayList<TokenizerNFAState> getTransitions(Character c) {
+		ArrayList<TokenizerNFAState> trans = new ArrayList<TokenizerNFAState>(); 
 		
 		if (transitions.containsKey(c)) {
 			trans.addAll(transitions.get(c));
@@ -56,11 +56,11 @@ public class TokenizerNFAState extends TokenizerState {
 	/**
 	 * Get states attainable on an epsilon transition 
 	 */
-	public Vector<TokenizerNFAState> getEpsilonTransitions() {
+	public ArrayList<TokenizerNFAState> getEpsilonTransitions() {
 		if (transitions.containsKey(null)) {
 			return transitions.get(null);
 		} else {
-			return new Vector<TokenizerNFAState>();
+			return new ArrayList<TokenizerNFAState>();
 		}
 	}
 	

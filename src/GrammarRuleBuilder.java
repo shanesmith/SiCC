@@ -1,6 +1,6 @@
 import java.util.Hashtable;
 import java.util.Stack;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * Builds a rule with its accompanying sub-rules 
@@ -35,7 +35,7 @@ public class GrammarRuleBuilder {
 	/**
 	 * The set of built rules, including main and sub-rules
 	 */
-	private Hashtable<String, Vector<GrammarRule>> rules = new Hashtable<String, Vector<GrammarRule>>();
+	private Hashtable<String, ArrayList<GrammarRule>> rules = new Hashtable<String, ArrayList<GrammarRule>>();
 	
 	/**
 	 * Stacks used for processing
@@ -48,8 +48,8 @@ public class GrammarRuleBuilder {
 	 * A bunch of getters
 	 */
 	public String getName() { return name; }
-	public Hashtable<String, Vector<GrammarRule>> getRules() { return rules; }
-	public Vector<GrammarRule> getRules(String rulename) { return rules.get(rulename); }
+	public Hashtable<String, ArrayList<GrammarRule>> getRules() { return rules; }
+	public ArrayList<GrammarRule> getRules(String rulename) { return rules.get(rulename); }
 	
 	/**
 	 * Constructor.
@@ -249,7 +249,7 @@ public class GrammarRuleBuilder {
 	 * Add the given rule to the rule set
 	 */
 	private void addRule(GrammarRule rule) {
-		if (!rules.containsKey(rule.getName())) rules.put(rule.getName(), new Vector<GrammarRule>());
+		if (!rules.containsKey(rule.getName())) rules.put(rule.getName(), new ArrayList<GrammarRule>());
 		
 		rules.get(rule.getName()).add(rule);
 	}

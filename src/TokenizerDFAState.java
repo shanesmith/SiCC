@@ -1,6 +1,6 @@
 
 import java.util.Hashtable;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * A state to be used in a DFA for a tokenizer.
@@ -17,12 +17,12 @@ public class TokenizerDFAState extends TokenizerState {
 	/**
 	 * A DFA state is constructed from multiple NFA states when a conversion is done, this is where the NFA states are held.
 	 */
-	private Vector<TokenizerNFAState> NFAStates;
+	private ArrayList<TokenizerNFAState> NFAStates;
 	
 	/**
 	 * Construct a DFA state based on a set of NFA states
 	 */
-	public TokenizerDFAState(Vector<TokenizerNFAState> NFAStates) {
+	public TokenizerDFAState(ArrayList<TokenizerNFAState> NFAStates) {
 		super();
 		
 		this.NFAStates = NFAStates;
@@ -70,8 +70,8 @@ public class TokenizerDFAState extends TokenizerState {
 	/**
 	 * Get the transitions of the NFA states on the given character
 	 */
-	public Vector<TokenizerNFAState> getNFATransitions(char c) {
-		Vector<TokenizerNFAState> trans = new Vector<TokenizerNFAState>();
+	public ArrayList<TokenizerNFAState> getNFATransitions(char c) {
+		ArrayList<TokenizerNFAState> trans = new ArrayList<TokenizerNFAState>();
 		
 		for (TokenizerNFAState s : NFAStates) {
 			trans.addAll(s.getTransitions(c));
@@ -83,8 +83,8 @@ public class TokenizerDFAState extends TokenizerState {
 	/**
 	 * Get all the possible transition characters of the NFA states
 	 */
-	public Vector<Character> getNFATransitionCharacters() {		
-		Vector<Character> result = new Vector<Character>();
+	public ArrayList<Character> getNFATransitionCharacters() {		
+		ArrayList<Character> result = new ArrayList<Character>();
 		
 		if (NFAStates != null) {
 			
@@ -102,14 +102,14 @@ public class TokenizerDFAState extends TokenizerState {
 	/**
 	 * Get all the possible transition characters of this state
 	 */
-	public Vector<Character> getTransitionCharacters() {
-		return new Vector<Character>(transitions.keySet());
+	public ArrayList<Character> getTransitionCharacters() {
+		return new ArrayList<Character>(transitions.keySet());
 	}
 	
 	/**
 	 * Return the NFA states
 	 */
-	public Vector<TokenizerNFAState> getNFAStates() { return NFAStates; }
+	public ArrayList<TokenizerNFAState> getNFAStates() { return NFAStates; }
 	
 	/**
 	 * String representation of a state and its transitions 

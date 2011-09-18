@@ -39,7 +39,7 @@ public class TokenizerClassCreator {
 		
 		out.println("import java.io.*;");
 		out.println("import java.util.Hashtable;");
-		out.println("import java.util.Vector;");
+		out.println("import java.util.ArrayList;");
 		out.println("import java.util.Stack;");
 		out.println("import java.util.ListIterator;");
 		out.println();
@@ -71,7 +71,7 @@ public class TokenizerClassCreator {
 		out.println("  private Hashtable<Integer, String> accepting = new Hashtable<Integer, String>();");
 		out.println();
 		
-		out.println("  private Vector<" + tokclass + "> tokenHistory = new Vector<" + prefix + "Token>();");
+		out.println("  private ArrayList<" + tokclass + "> tokenHistory = new ArrayList<" + prefix + "Token>();");
 		out.println("  private ListIterator<" + tokclass+ "> tokenHistoryIT = tokenHistory.listIterator();");
 		out.println("  private int tokenHistorySize = 20;");
 		out.println();
@@ -209,7 +209,7 @@ public class TokenizerClassCreator {
 		for (TokenizerDFAState s : tokendef.getMasterTokenDFA().DFA) {
 			
 			if (s.isAccepting()) {
-				accepting.put(s.id, s.getOwners().firstElement().name);
+				accepting.put(s.id, s.getOwners().get(0).name);
 			}
 			
 			out.println("    buildState" + s.id + "();");
@@ -250,7 +250,7 @@ public class TokenizerClassCreator {
 		for (TokenizerDFAState s : tokendef.getMasterTokenDFA().DFA) {
 			
 			if (s.isAccepting()) {
-				accepting.put(s.id, s.getOwners().firstElement().name);
+				accepting.put(s.id, s.getOwners().start().name);
 			}
 			
 			out.println();

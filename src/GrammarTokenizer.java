@@ -1,6 +1,6 @@
 import java.io.*;
 import java.util.Hashtable;
-import java.util.Vector;
+import java.util.ArrayList;
 import java.util.Stack;
 import java.util.ListIterator;
 
@@ -51,7 +51,7 @@ public class GrammarTokenizer implements iTokenizer {
 
   private Hashtable<Integer, String> accepting = new Hashtable<Integer, String>();
 
-  private Vector<Token> tokenHistory = new Vector<Token>();
+  private ArrayList<Token> tokenHistory = new ArrayList<Token>();
   private ListIterator<Token> tokenHistoryIT = tokenHistory.listIterator();
   private int tokenHistorySize = 20;
 

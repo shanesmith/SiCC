@@ -123,11 +123,11 @@ public class TokenizerDefinition {
 			StateGraph<TokenizerNFAState> copy = dfa.copyGraph(dfa.NFA);
 			
 			// the last element is accepting and owned by the current DFA
-			copy.lastElement().setAccepting(true);
-			copy.lastElement().addOwner(dfa);
+			copy.end().setAccepting(true);
+			copy.end().addOwner(dfa);
 			
 			// add as alternative
-			start.addTransition(null, copy.firstElement());
+			start.addTransition(null, copy.start());
 			NFA.addAll(copy);
 		}
 		

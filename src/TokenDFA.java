@@ -83,7 +83,7 @@ public class TokenDFA {
 	 */
 	public boolean matches(String str) {
 		
-		TokenizerDFAState curState = DFA.firstElement();
+		TokenizerDFAState curState = DFA.start();
 		
 		for (char c : str.toCharArray()) {
 			
@@ -104,11 +104,11 @@ public class TokenDFA {
 		TokenizerNFAState start = new TokenizerNFAState();
 		TokenizerNFAState end = new TokenizerNFAState();
 		
-		start.addTransition(null, NFA.firstElement());
-		start.addTransition(null, alt.firstElement());
+		start.addTransition(null, NFA.start());
+		start.addTransition(null, alt.start());
 		
-		NFA.lastElement().addTransition(null, end);
-		alt.lastElement().addTransition(null, end);
+		NFA.end().addTransition(null, end);
+		alt.end().addTransition(null, end);
 		
 		NFA.addFirst(start);
 		NFA.addAll(alt);
@@ -202,7 +202,7 @@ public class TokenDFA {
 						throw new TokenizerDefinitionException("Character class has not been opened with [");
 					}
 					
-					if (operandStack.peek().firstElement().getTransitionCharacters().isEmpty()) {
+					if (operandStack.peek().start().getTransitionCharacters().isEmpty()) {
 						throw new TokenizerDefinitionException("Character classes cannot be empty");
 					}
 					
@@ -236,7 +236,7 @@ public class TokenDFA {
 					}
 						
 					// operator needs to be defined before any literals in the character class 
-					if (!operandStack.peek().firstElement().getTransitionCharacters().isEmpty()) {
+					if (!operandStack.peek().start().getTransitionCharacters().isEmpty()) {
 						throw new TokenizerDefinitionException("Character class negation operator ^ needs to be first after opening [, or escaped if literal");
 					}
 					
@@ -324,7 +324,7 @@ public class TokenDFA {
 		}
 		
 		// last state of NFA is accepting
-		NFA.lastElement().setAccepting(true);
+		NFA.end().setAccepting(true);
 	}
 	
 	/**
@@ -366,10 +366,10 @@ public class TokenDFA {
 				if (c == null) continue;
 				
 				// get all states attainable with the character match
-				Vector<TokenizerNFAState> moveResult = move(processState, c);
+				ArrayList<TokenizerNFAState> moveResult = move(processState, c);
 				
 				// get all states attainable by an epsilon transition from move's results
-				Vector<TokenizerNFAState> epsilonResult = epsilonClosure(moveResult);
+				ArrayList<TokenizerNFAState> epsilonResult = epsilonClosure(moveResult);
 				
 				// search through the current DFA to see if a similar state already exists
 				boolean found = false;
@@ -413,7 +413,7 @@ public class TokenDFA {
 		graph.start().copyGraph(newgraph, copytable);
 		
 		// last state in original graph might not be last in new graph, so move it to the end
-		newgraph.add( newgraph.remove( newgraph.indexOf( copytable.get(graph.lastElement()) ) ) );
+		newgraph.add( newgraph.remove( newgraph.indexOf( copytable.get(graph.end()) ) ) );
 		
 		return newgraph;
 	}
@@ -421,8 +421,8 @@ public class TokenDFA {
 	/**
 	 * Returns the epsilon closure of the given state 
 	 */
-	public static Vector<TokenizerNFAState> epsilonClosure(TokenizerNFAState s) {
-		Vector<TokenizerNFAState> states = new Vector<TokenizerNFAState>();
+	public static ArrayList<TokenizerNFAState> epsilonClosure(TokenizerNFAState s) {
+		ArrayList<TokenizerNFAState> states = new ArrayList<TokenizerNFAState>();
 		states.add(s);
 		return epsilonClosure(states);
 	}
@@ -430,8 +430,8 @@ public class TokenDFA {
 	/**
 	 * Returns the epsilon closure (all states attainable by epsilon transitions only) of the given states
 	 */
-	public static Vector<TokenizerNFAState> epsilonClosure(Vector<TokenizerNFAState> states) {
-		Vector<TokenizerNFAState> closure = new Vector<TokenizerNFAState>(states);
+	public static ArrayList<TokenizerNFAState> epsilonClosure(ArrayList<TokenizerNFAState> states) {
+		ArrayList<TokenizerNFAState> closure = new ArrayList<TokenizerNFAState>(states);
 		
 		Stack<TokenizerNFAState> process = new Stack<TokenizerNFAState>();
 				
@@ -439,7 +439,7 @@ public class TokenDFA {
 		for (TokenizerNFAState s : states) process.push(s);
 		
 		while( !process.empty() ) {
-			Vector<TokenizerNFAState> epsilonStates = process.pop().getEpsilonTransitions();
+			ArrayList<TokenizerNFAState> epsilonStates = process.pop().getEpsilonTransitions();
 			
 			for (TokenizerNFAState s : epsilonStates) {
 				if ( !closure.contains(s) ) {
@@ -456,8 +456,8 @@ public class TokenDFA {
 	/**
 	 * Returns all states attainable from the given state with the transition character specified
 	 */
-	public static Vector<TokenizerNFAState> move(TokenizerDFAState s, Character c) {
-		Vector<TokenizerDFAState> states = new Vector<TokenizerDFAState>();
+	public static ArrayList<TokenizerNFAState> move(TokenizerDFAState s, Character c) {
+		ArrayList<TokenizerDFAState> states = new ArrayList<TokenizerDFAState>();
 		states.add(s);
 		return move(states, c);
 	}
@@ -465,8 +465,8 @@ public class TokenDFA {
 	/**
 	 * Returns all states attainable from the given states with the transition character specified
 	 */
-	public static Vector<TokenizerNFAState> move(Vector<TokenizerDFAState> states, Character c) {
-		Vector<TokenizerNFAState> result = new Vector<TokenizerNFAState>();
+	public static ArrayList<TokenizerNFAState> move(ArrayList<TokenizerDFAState> states, Character c) {
+		ArrayList<TokenizerNFAState> result = new ArrayList<TokenizerNFAState>();
 		
 		for (TokenizerDFAState from : states) {
 			for (TokenizerNFAState s : from.getNFATransitions(c)) { 
@@ -555,7 +555,7 @@ public class TokenDFA {
 	private void addToCharClass(Character c) {
 		StateGraph<TokenizerNFAState> charclass = operandStack.pop();
 		
-		charclass.firstElement().addTransition(c, charclass.lastElement());
+		charclass.start().addTransition(c, charclass.end());
 		
 		operandStack.push(charclass);
 	}
@@ -601,10 +601,10 @@ public class TokenDFA {
 		
 		StateGraph<TokenizerNFAState> graph = operandStack.pop();
 		
-		TokenizerNFAState first = graph.firstElement();
-		TokenizerNFAState last = graph.lastElement();
+		TokenizerNFAState first = graph.start();
+		TokenizerNFAState last = graph.end();
 		
-		Set<Character> negCharSet = graph.firstElement().getTransitionCharacters();
+		Set<Character> negCharSet = graph.start().getTransitionCharacters();
 		
 		char[] negChars = new char[negCharSet.size()];
 		
@@ -639,7 +639,7 @@ public class TokenDFA {
 		b = operandStack.pop();
 		a = operandStack.pop();
 		
-		a.lastElement().addTransition(null, b.firstElement());
+		a.end().addTransition(null, b.start());
 		a.addAll(b);
 		
 		operandStack.push(a);
@@ -662,11 +662,11 @@ public class TokenDFA {
 		TokenizerNFAState start = new TokenizerNFAState();
 		TokenizerNFAState end = new TokenizerNFAState();
 		
-		start.addTransition(null, a.firstElement());
-		start.addTransition(null, b.firstElement());
+		start.addTransition(null, a.start());
+		start.addTransition(null, b.start());
 		
-		a.lastElement().addTransition(null, end);
-		b.lastElement().addTransition(null, end);
+		a.end().addTransition(null, end);
+		b.end().addTransition(null, end);
 		
 		b.addLast(end);
 		
@@ -691,10 +691,10 @@ public class TokenDFA {
 		TokenizerNFAState end = new TokenizerNFAState();
 		
 		start.addTransition(null, end);
-		start.addTransition(null, g.firstElement());
+		start.addTransition(null, g.start());
 		
-		g.lastElement().addTransition(null, end);
-		g.lastElement().addTransition(null, g.firstElement());
+		g.end().addTransition(null, end);
+		g.end().addTransition(null, g.start());
 		
 		g.addFirst(start);
 		g.addLast(end);
@@ -716,10 +716,10 @@ public class TokenDFA {
 		TokenizerNFAState start = new TokenizerNFAState();
 		TokenizerNFAState end = new TokenizerNFAState();
 		
-		start.addTransition(null, g.firstElement());
+		start.addTransition(null, g.start());
 		
-		g.lastElement().addTransition(null, end);
-		g.lastElement().addTransition(null, g.firstElement());
+		g.end().addTransition(null, end);
+		g.end().addTransition(null, g.start());
 		
 		g.addFirst(start);
 		g.addLast(end);
@@ -742,9 +742,9 @@ public class TokenDFA {
 		TokenizerNFAState end = new TokenizerNFAState();
 		
 		start.addTransition(null, end);
-		start.addTransition(null, g.firstElement());
+		start.addTransition(null, g.start());
 		
-		g.lastElement().addTransition(null, end);
+		g.end().addTransition(null, end);
 		
 		g.addFirst(start);
 		g.addLast(end);
@@ -786,7 +786,7 @@ public class TokenDFA {
 	/**
 	 * Returns whether both graphs are equal by comparing each item
 	 */
-	public static boolean equals(Vector<TokenizerNFAState> va, Vector<TokenizerNFAState> vb) {
+	public static boolean equals(ArrayList<TokenizerNFAState> va, ArrayList<TokenizerNFAState> vb) {
 		
 		if (va.size() != vb.size()) return false;
 		

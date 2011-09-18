@@ -61,7 +61,7 @@ public class TokenizerRunner {
 			if (curState.isAccepting()) {
 				pushChar(c);
 				
-				TokenDFA tokdfa = curState.getOwners().firstElement();
+				TokenDFA tokdfa = curState.getOwners().get(0);
 				
 				if (tokdfa.name.equals(SKIP)) {
 					continue tokenLoop;

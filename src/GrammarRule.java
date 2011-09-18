@@ -128,19 +128,19 @@ public class GrammarRule {
 	/**
 	 * Return the results of FIRST on this rule 
 	 */
-	public Vector<String> first() throws GrammarDefinitionException {
+	public ArrayList<String> first() throws GrammarDefinitionException {
 		return _first(new HashSet<String>());
 	}
 	
 	
-	private Vector<String> _first(HashSet<String> path) throws GrammarDefinitionException {
+	private ArrayList<String> _first(HashSet<String> path) throws GrammarDefinitionException {
 		
 		// check for left recursion
 		if (path.contains(name)) {
 			throw new GrammarDefinitionException("Left recursion detected at rule \"" + name + "\"");
 		} 
 		
-		Vector<String> first = new Vector<String>();
+		ArrayList<String> first = new ArrayList<String>();
 		
 		Iterator<GrammarState> iterator = graph.iterator();
 		

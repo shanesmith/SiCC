@@ -1,7 +1,7 @@
 
-import java.util.Vector;
+import java.util.ArrayList;
 
-public class StateGraph<T> extends Vector<T> {
+public class StateGraph<T> extends ArrayList<T> {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -12,8 +12,8 @@ public class StateGraph<T> extends Vector<T> {
 	public void addFirst(T s) { add(0, s); }
 	public void addLast(T s) { add(s); }
 	
-	public T start() { return firstElement(); }
-	public T end() { return lastElement(); }
+	public T start() { return get(0); }
+	public T end() { return get(size()-1); }
 	
 	public String toString() {
 		String str = "";

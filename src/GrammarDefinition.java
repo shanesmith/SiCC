@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * Creates a parse table based on a given set of rules. 
@@ -19,7 +19,7 @@ public class GrammarDefinition {
 	/**
 	 * The set of all rules, keyed by their name
 	 */
-	private Hashtable<String, Vector<GrammarRule>> rules = new Hashtable<String, Vector<GrammarRule>>();
+	private Hashtable<String, ArrayList<GrammarRule>> rules = new Hashtable<String, ArrayList<GrammarRule>>();
 	
 	/**
 	 * The parse table created from the given set of rules.
@@ -42,7 +42,7 @@ public class GrammarDefinition {
 	public Set<String> getRuleNames() { return rules.keySet(); }
 	public String getStartRuleName() { return startRuleName; }
 	public HashMap<String, HashMap<String, GrammarRule>> getTable() { return table; }
-	public Vector<GrammarRule> getRules(String name) { return rules.get(name); }
+	public ArrayList<GrammarRule> getRules(String name) { return rules.get(name); }
 	public boolean hasRule(String name) { return rules.containsKey(name); }
 	
 	/**
@@ -145,7 +145,7 @@ public class GrammarDefinition {
 			// Add the rules returned by the rule builder to the set of all rules
 			for (String name : rulebuilder.getRules().keySet()) {
 				if (!rules.containsKey(name)) {
-					rules.put(name, new Vector<GrammarRule>());
+					rules.put(name, new ArrayList<GrammarRule>());
 				}
 				
 				rules.get(name).addAll(rulebuilder.getRules(name));
@@ -155,7 +155,7 @@ public class GrammarDefinition {
 		
 		// Iterate through each state of each rule, marking the state as being a token or rule state
 		// by comparing the state's name with the names of defined rules
-		for (Vector<GrammarRule> altrules : rules.values()) {
+		for (ArrayList<GrammarRule> altrules : rules.values()) {
 			
 			for (GrammarRule rule : altrules) {
 				
@@ -180,7 +180,7 @@ public class GrammarDefinition {
 	 */
 	private void buildParseTable() throws GrammarDefinitionException {
 		
-		for (Vector<GrammarRule> altrules : rules.values()) {
+		for (ArrayList<GrammarRule> altrules : rules.values()) {
 			for (GrammarRule rule : altrules) {
 				
 				for (String terminal : rule.first()) {
@@ -230,7 +230,7 @@ public class GrammarDefinition {
 		
 		path.add(rulename);
 		
-		for (Vector<GrammarRule> v : rules.values()) {
+		for (ArrayList<GrammarRule> v : rules.values()) {
 			for (GrammarRule r : v) {
 				follow.addAll(r.getFollowOf(rulename, path));
 			}

@@ -475,18 +475,18 @@ public class SiCC {
 		
 		PrintWriter out = getWriter(classname + ".java");
 		
-		out.println("import java.util.Vector;");
+		out.println("import java.util.ArrayList;");
 		out.println();
 		out.println("public class " + classname + " {"); out.println();
 		out.println("  private " + prefix + "ASTNode parent;"); out.println();
-		out.println("  private Vector<" + prefix + "ASTNode> children = new Vector<" + prefix + "ASTNode>();"); out.println();
+		out.println("  private ArrayList<" + prefix + "ASTNode> children = new ArrayList<" + prefix + "ASTNode>();"); out.println();
 		out.println("  private String name, value;"); out.println();
 		out.println("  private boolean multi_child;"); out.println();
 		out.println("  public " + classname + " (String n, String v, boolean m) { name=n; value=v; multi_child=m; }"); out.println();
 		out.println("  public boolean isMultiChild() { return multi_child; }"); out.println();
 		out.println("  public void addChild(" + prefix + "ASTNode node) { if (node.parent != null) throw new RuntimeException(\"Node already has parent, can't add as child\");  children.add(node); node.parent = this; }"); out.println();
 		out.println("  public void removeChild(" + prefix + "ASTNode node) { children.remove(node); node.parent = null; }"); out.println();
-		out.println("  public Vector<" + prefix + "ASTNode> getChildren() { return children; }"); out.println();
+		out.println("  public ArrayList<" + prefix + "ASTNode> getChildren() { return children; }"); out.println();
 		out.println("  public " + prefix + "ASTNode getChild(int i) { return children.get(i); }"); out.println();
 		out.println("  public int numChildren() { return children.size(); }"); out.println();
 		out.println("  public String getName() { return name; }"); out.println();
