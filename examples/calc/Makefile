@@ -1,7 +1,7 @@
 
 
 all:
-	./sscc --prefix Calc calc.t calc.g
+	./sicc --prefix Calc calc.t calc.g
 	javac *.java
 
 run:	all

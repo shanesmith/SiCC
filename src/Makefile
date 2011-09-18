@@ -3,12 +3,12 @@ sources=$(wildcard *.java)
 
 classes=$(sources:.java=.class)
 
-ssCC.jar:  $(classes)
-	jar cvf ssCC.jar *.class
+SiCC.jar:  $(classes)
+	jar cvf SiCC.jar *.class
 
 %.class : %.java
 	javac $< 
 
 clean :
-	rm -f ssCC.jar *.class
+	rm -f SiCC.jar *.class
 

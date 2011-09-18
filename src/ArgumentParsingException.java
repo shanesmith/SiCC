@@ -1,6 +1,6 @@
 
 /**
- * Exception thrown by ssCC's argument parser
+ * Exception thrown by SiCC's argument parser
  * when invalid arguments are provided.
  */
 public class ArgumentParsingException extends Exception {

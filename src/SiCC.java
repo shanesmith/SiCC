@@ -1,20 +1,20 @@
 /**
- *  Shane Smith's Compiler Compiler (ssCC)
+ *  Simple Compiler Compiler (SiCC)
  *  
  *  
- *  ssCC generates parser code based on a language's definition.
+ *  SiCC generates parser code based on a language's definition.
  *  
  *  A language is first defined by its tokens, followed by its grammar. These two definitions
- *  are written into their own files, which ssCC reads in to create the parser.
+ *  are written into their own files, which SiCC reads in to create the parser.
  *  
  *  The token definition file is translated into a tokenizer which the parser uses. As you
  *  will see below, it is possible to omit the token definition if you plan on building your
  *  own tokenizer for the parser, or to create only the tokenizer based on the definition. 
  *  
  *  
- *  ssCC is invoked with the following options
+ *  SiCC is invoked with the following options
  * 
- *  	ssCC [--package packagename] [--prefix prefixname] <definitions>
+ *  	SiCC [--package packagename] [--prefix prefixname] <definitions>
  *  
  *  where
  *  
@@ -63,7 +63,7 @@ import java.io.*;
  * TODO: Use JCF collections
  * TODO: Make Visitor class generic
  */
-public class ssCC {
+public class SiCC {
 
 	/**
 	 * Constants used for the "only" variable
@@ -109,16 +109,16 @@ public class ssCC {
 	public static void main(String[] args) {
 		
 		try {			
-			ssCC sscc = new ssCC(args);
+			SiCC sicc = new SiCC(args);
 			
-			sscc.createClasses();
+			sicc.createClasses();
 			
-			System.out.println("ssCC finished with no errors.");
+			System.out.println("SiCC finished with no errors.");
 			
 			System.exit(0);
 		}
 		catch (ArgumentParsingException e) {
-			System.out.println("Arguments passed to ssCC are invalid: " + e);
+			System.out.println("Arguments passed to SiCC are invalid: " + e);
 			System.exit(1);
 		}
 		catch (TokenizerDefinitionException e) {
@@ -140,7 +140,7 @@ public class ssCC {
 	 * Constructor. Parse given arguments and create token and/or grammar
 	 * definition objects according to arguments.  
 	 */
-	protected ssCC(String[] args) throws ArgumentParsingException, TokenizerDefinitionException, GrammarDefinitionException, TokenizerException, IOException {
+	protected SiCC(String[] args) throws ArgumentParsingException, TokenizerDefinitionException, GrammarDefinitionException, TokenizerException, IOException {
 		this.args = args;
 		
 		// parse the arguments
