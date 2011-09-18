@@ -47,21 +47,12 @@
  *   	
  */
 
-/*
- * TODO
- * - Testing
- * - Example files
- * - Graphviz, Eclipse Plugin
- */
-
 import java.io.*;
 
 /**
- * Shane Smith's Compiler Compiler
- * @author shane
- * TODO: Fix, or verify, the prefix feature
- * TODO: Use JCF collections
- * TODO: Make Visitor class generic
+ * Simple Compiler Compiler
+ * 
+ * @author Shane Smith <shane.smith.baz@gmail.com>
  */
 public class SiCC {
 

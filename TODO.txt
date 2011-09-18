@@ -1,6 +1,18 @@
-Some nice features to add:
 
 - Add line number information to all nodes in parse tree
+
+- JavaDoc
+
 - Add a tool for generating Visitor classes
   - should implement a trivial "visit all visitor"
   - comments should include the grammar rules for that node
+  
+- Make Visitor class generic
+
+- Use JCF collections
+  - Stack -> ArrayDeque (but ArrayDeque cannot handle null elements!)
+  - Hastable -> HashMap (but HashMap cannot handle null keys!)
+  
+- Fix, or verify, the prefix feature
+
+- Graphviz, Eclipse Plugin
