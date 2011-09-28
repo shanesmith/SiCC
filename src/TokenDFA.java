@@ -1,5 +1,9 @@
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * TokenDFA represents a token definition with a DFA
@@ -42,8 +46,8 @@ public class TokenDFA {
 	/**
 	 * Stacks used to build the NFA
 	 */
-	Stack<StateGraph<TokenizerNFAState>> operandStack = new Stack<StateGraph<TokenizerNFAState>>();
-	Stack<Character> operatorStack = new Stack<Character>();
+	ArrayDeque<StateGraph<TokenizerNFAState>> operandStack = new ArrayDeque<StateGraph<TokenizerNFAState>>();
+	ArrayDeque<Character> operatorStack = new ArrayDeque<Character>();
 	
 	/**
 	 * Graphs
@@ -182,7 +186,7 @@ public class TokenDFA {
 					
 					while ( true ) {
 						
-						if (operatorStack.empty()) {
+						if (operatorStack.isEmpty()) {
 							throw new TokenizerDefinitionException("Could not find beggining subpattern (");
 						}
 						
@@ -304,7 +308,7 @@ public class TokenDFA {
 		}
 		
 		// finish evaluating operators
-		while (!operatorStack.empty()) {
+		while (!operatorStack.isEmpty()) {
 			c = operatorStack.peek();
 			
 			if (c == '(') throw new TokenizerDefinitionException("Could not find end subpattern )");
@@ -312,7 +316,7 @@ public class TokenDFA {
 			evaluate();
 		}
 		
-		if (operandStack.empty()) {
+		if (operandStack.isEmpty()) {
 			throw new RuntimeException("Empty NFA stack");
 		}
 		
@@ -344,7 +348,7 @@ public class TokenDFA {
 		TokenizerDFAState processState;
 		
 		// a process stack
-		Stack<TokenizerDFAState> process = new Stack<TokenizerDFAState>();
+		ArrayDeque<TokenizerDFAState> process = new ArrayDeque<TokenizerDFAState>();
 		
 		// create a new graph for the DFA
 		DFA = new StateGraph<TokenizerDFAState>();
@@ -356,7 +360,7 @@ public class TokenDFA {
 		process.push(DFAStartState);
 		
 		// iterate over process stack
-		while ( !process.empty() ) {
+		while ( !process.isEmpty() ) {
 			processState = process.pop();
 			
 			// for each possible character match of the state's NFA
@@ -433,12 +437,12 @@ public class TokenDFA {
 	public static ArrayList<TokenizerNFAState> epsilonClosure(ArrayList<TokenizerNFAState> states) {
 		ArrayList<TokenizerNFAState> closure = new ArrayList<TokenizerNFAState>(states);
 		
-		Stack<TokenizerNFAState> process = new Stack<TokenizerNFAState>();
+		ArrayDeque<TokenizerNFAState> process = new ArrayDeque<TokenizerNFAState>();
 				
 		// Initialise process stack with all given states
 		for (TokenizerNFAState s : states) process.push(s);
 		
-		while( !process.empty() ) {
+		while( !process.isEmpty() ) {
 			ArrayList<TokenizerNFAState> epsilonStates = process.pop().getEpsilonTransitions();
 			
 			for (TokenizerNFAState s : epsilonStates) {
@@ -518,7 +522,7 @@ public class TokenDFA {
 	private void pushOperator(Character c, boolean eval) throws TokenizerDefinitionException {
 		if (eval) {
 			// evaluate while there are operators and they have precedence over the one pushed
-			while (!operatorStack.empty() && precedence(c, operatorStack.peek().charValue())) {
+			while (!operatorStack.isEmpty() && precedence(c, operatorStack.peek().charValue())) {
 				evaluate();
 			}
 		}
