@@ -40,7 +40,7 @@ public class TokenizerClassCreator {
 		out.println("import java.io.*;");
 		out.println("import java.util.Hashtable;");
 		out.println("import java.util.ArrayList;");
-		out.println("import java.util.Stack;");
+		out.println("import java.util.ArrayDeque;");
 		out.println("import java.util.ListIterator;");
 		out.println();
 		
@@ -76,7 +76,7 @@ public class TokenizerClassCreator {
 		out.println("  private int tokenHistorySize = 20;");
 		out.println();
 		
-		out.println("  private Stack<Integer> pushedChars = new Stack<Integer>();");
+		out.println("  private ArrayDeque<Integer> pushedChars = new ArrayDeque<Integer>();");
 		out.println();
 		
 		out.println("  public " + classname + " (Reader reader) {");
@@ -178,7 +178,7 @@ public class TokenizerClassCreator {
 		
 		out.println("  private int getChar() throws " + prefix + "TokenizerException {");
 		out.println("    int c; int startLine = getLineNumber();");
-		out.println("    if (!pushedChars.empty()) {");
+		out.println("    if (!pushedChars.isEmpty()) {");
 		out.println("      c = pushedChars.pop();");
 		out.println("      if (c == 10 || (c == 13 && pushedChars.peek() != 10)) input.setLineNumber(input.getLineNumber()+1);");
 		out.println("    } else {");

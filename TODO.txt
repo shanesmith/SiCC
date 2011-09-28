@@ -7,8 +7,6 @@
   - should implement a trivial "visit all visitor"
   - comments should include the grammar rules for that node
   
-- Make Visitor class generic
-
 - Use JCF collections
   - Stack -> ArrayDeque (but ArrayDeque cannot handle null elements!)
   - Hastable -> HashMap (but HashMap cannot handle null keys!)

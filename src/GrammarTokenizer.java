@@ -1,7 +1,7 @@
 import java.io.*;
 import java.util.Hashtable;
 import java.util.ArrayList;
-import java.util.Stack;
+import java.util.ArrayDeque;
 import java.util.ListIterator;
 
 /**
@@ -55,7 +55,7 @@ public class GrammarTokenizer implements iTokenizer {
   private ListIterator<Token> tokenHistoryIT = tokenHistory.listIterator();
   private int tokenHistorySize = 20;
 
-  private Stack<Integer> pushedChars = new Stack<Integer>();
+  private ArrayDeque<Integer> pushedChars = new ArrayDeque<Integer>();
 
   public GrammarTokenizer (Reader reader) {
     input = new LineNumberReader(reader);
@@ -137,7 +137,7 @@ public class GrammarTokenizer implements iTokenizer {
   private void pushChar(Integer c) { pushedChars.push(c); }
 
   private int getChar() throws TokenizerException {
-    if (!pushedChars.empty()) {
+    if (!pushedChars.isEmpty()) {
       return pushedChars.pop();
     } else {
       try {
